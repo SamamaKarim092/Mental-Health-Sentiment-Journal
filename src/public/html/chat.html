@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/chat.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-brain"></i>
+            <span>Mental Health Journal</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/journal" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Journal</span>
+            </a>
+            <a href="trend" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Emotional Trends</span>
+            </a>
+            <a href="quote" class="nav-item">
+                <i class="fas fa-lightbulb"></i>
+                <span>Quotes & Tips</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fas fa-comment-dots"></i>
+                <span>AI Assistant</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="page-header">
+            <h2>Mental Health AI Assistant</h2>
+            <p>Talk with our AI about your thoughts, feelings, or get mental health tips and coping strategies.</p>
+        </header>
+
+        <!-- Chat Container -->
+        <section class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <p>Hi there! I'm your mental health assistant. I'm here to listen, provide support, and offer helpful tips for your well-being. How are you feeling today?</p>
+                    </div>
+                </div>
+                <!-- More messages will be added here dynamically -->
+            </div>
+
+            <div class="chat-input-container">
+                <form id="chatForm">
+                    <textarea id="userMessage" placeholder="Type your message here..." rows="1"></textarea>
+                    <button type="submit" class="send-btn" id="sendButton">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+                <div class="chat-suggestions">
+                    <button class="suggestion-chip">I'm feeling anxious</button>
+                    <button class="suggestion-chip">Help me relax</button>
+                    <button class="suggestion-chip">Mindfulness techniques</button>
+                    <button class="suggestion-chip">Sleep problems</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Cards -->
+        <section class="features-section">
+            <h3>How the AI Assistant Can Help</h3>
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h4>Emotional Support</h4>
+                    <p>Express your feelings freely in a safe, non-judgmental space and receive supportive responses.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h4>Coping Strategies</h4>
+                    <p>Learn practical techniques for managing stress, anxiety, and other difficult emotions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h4>Journaling Prompts</h4>
+                    <p>Get personalized journaling ideas to help you process your thoughts and feelings.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lungs"></i>
+                    </div>
+                    <h4>Breathing Exercises</h4>
+                    <p>Guided breathing techniques to help you calm your mind and reduce physical tension.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Important Disclaimer -->
+        <section class="disclaimer-section">
+            <div class="disclaimer-card">
+                <div class="disclaimer-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="disclaimer-content">
+                    <h4>Important Note</h4>
+                    <p>This AI assistant is not a substitute for professional mental health care. If you're experiencing a crisis or severe mental health concerns, please contact a qualified healthcare provider or crisis service.</p>
+                    <p>For immediate help in the US: <strong>Call 988</strong> or text HOME to 741741 to reach the Crisis Text Line.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/chat.js"></script>
+</body>
+</html>

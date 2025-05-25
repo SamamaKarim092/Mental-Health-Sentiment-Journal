@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Journal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-brain"></i>
+            <span>Mental Health Journal</span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-book"></i>
+                <span>Journal</span>
+            </a>
+            <a href="trend" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Emotional Trends</span>
+            </a>
+            <a href="quote" class="nav-item">
+                <i class="fas fa-lightbulb"></i>
+                <span>Quotes & Tips</span>
+            </a>
+            <a href="chat" class="nav-item active">
+                <i class="fas fa-comment-dots"></i>
+                <span>AI Assistant</span>
+            </a>
+        </nav>
+    </aside>
+
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="page-header">
+            <h2>Journal</h2>
+            <p>Record your thoughts and feelings to track your mental well-being over time.</p>
+        </header>
+
+        <!-- Journal Entry Form -->
+        <section class="journal-form">
+            <form id="newEntryForm">
+                <div class="form-group">
+                    <label for="entryTitle">Title</label>
+                    <input type="text" id="entryTitle" placeholder="Give your entry a title..." required>
+                </div>
+                <div class="form-group">
+                    <label for="entryContent">How are you feeling today?</label>
+                    <textarea id="entryContent" placeholder="Write your thoughts here..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>How would you rate your mood?</label>
+                    <div class="sentiment-selector">
+                        <div class="sentiment-option positive" data-sentiment="positive">
+                            <i class="fas fa-smile"></i>
+                            <div>Positive</div>
+                        </div>
+                        <div class="sentiment-option neutral" data-sentiment="neutral">
+                            <i class="fas fa-meh"></i>
+                            <div>Neutral</div>
+                        </div>
+                        <div class="sentiment-option negative" data-sentiment="negative">
+                            <i class="fas fa-frown"></i>
+                            <div>Negative</div>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Save Entry</button>
+            </form>
+        </section>
+
+<section class="entries-list">
+            <div class="entries-header">
+                <div>
+                     <h3>Recent Entries</h3>
+                     <div class="filter-controls" style="margin-top: 10px;"> <label for="sentimentFilter">Sentiment:</label>
+                         <select id="sentimentFilter">
+                             <option value="">All</option>
+                             <option value="positive">Positive</option>
+                             <option value="neutral">Neutral</option>
+                             <option value="negative">Negative</option>
+                         </select>
+
+                         <label for="startDateFilter" style="margin-left: 20px;">From:</label>
+                         <input type="date" id="startDateFilter">
+
+                         <label for="endDateFilter" style="margin-left: 10px;">To:</label>
+                         <input type="date" id="endDateFilter">
+
+                         </div>
+                </div>
+                </div>
+
+            <div class="entry-cards-container">
+                 <div class="entry-card">
+                    <div class="entry-header">
+                        <h4>Example Entry</h4>
+                        <span class="entry-sentiment positive">Positive</span>
+                    </div>
+                    <div class="entry-date">May 15, 2025</div>
+                    <p class="entry-content">
+                        This is an example entry.
+                    </p>
+                    <div class="entry-actions">
+                        <button class="edit-btn"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="delete-btn"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                 </div>
+                 </div>
+
+            <div class="empty-state" style="display: none;">
+                 <i class="fas fa-journal-whills"></i>
+                 <h4>No entries yet!</h4>
+                 <p>Start by writing your first journal entry above.</p>
+             </div>
+
+        </section>
+    </main>
+
+    <script src="/js/journal.js"></script>
+</body>
+</html>

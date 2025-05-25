@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotional Trends | Mental Health Journal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-brain"></i>
+            <span>Mental Health Journal</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Journal</span>
+            </a>
+            <a href="trend" class="nav-item active">
+                <i class="fas fa-chart-line"></i>
+                <span>Emotional Trends</span>
+            </a>
+            <a href="quote" class="nav-item">
+                <i class="fas fa-lightbulb"></i>
+                <span>Quotes & Tips</span>
+            </a>
+            <a href="chat" class="nav-item active">
+                <i class="fas fa-comment-dots"></i>
+                <span>AI Assistant</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="page-header">
+            <h2>Emotional Trends</h2>
+            <p>Visualize your emotional patterns over time and gain insights into your mental well-being.</p>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Entries This Month</div>
+                <div class="stat-value">18</div>
+                <div class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>24% from last month</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Average Mood</div>
+                <div class="stat-value">Positive</div>
+                <div class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Improving over time</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Most Common Day</div>
+                <div class="stat-value">Mondays</div>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar"></i>
+                    <span>6 entries</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Chart -->
+        <section class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Mood Over Time</h3>
+                <div class="chart-filters">
+                    <select class="filter-select">
+                        <option value="week">This Week</option>
+                        <option value="month" selected>This Month</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart">
+                <!-- Canvas for Chart.js -->
+                <canvas id="moodChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Mood Distribution -->
+        <section class="mood-distribution">
+            <h3 class="distribution-title">Mood Distribution</h3>
+            
+            <div class="mood-row">
+                <div class="mood-label">Positive</div>
+                <div class="mood-bar-container">
+                    <div class="mood-bar positive" style="width: 45%;"></div>
+                </div>
+                <div class="mood-percentage">45%</div>
+            </div>
+            
+            <div class="mood-row">
+                <div class="mood-label">Neutral</div>
+                <div class="mood-bar-container">
+                    <div class="mood-bar neutral" style="width: 35%;"></div>
+                </div>
+                <div class="mood-percentage">35%</div>
+            </div>
+            
+            <div class="mood-row">
+                <div class="mood-label">Negative</div>
+                <div class="mood-bar-container">
+                    <div class="mood-bar negative" style="width: 20%;"></div>
+                </div>
+                <div class="mood-percentage">20%</div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Chart.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="/js/trend.js"></script>
+</body>
+</html>
