@@ -1,0 +1,169 @@
+/* chat-history.css */
+
+.sidebar {
+    position: fixed; /* Keep sidebar fixed */
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 250px; /* Standard sidebar width */
+    background-color: var(--sidebar-bg); /* Use your existing sidebar background */
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    transition: width 0.3s ease; /* Smooth transition for width change */
+    z-index: 1000;
+}
+
+.nav-links {
+    flex-grow: 1; /* Allows nav links to take available space */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure the main content shifts when sidebar expands */
+.main-content {
+    margin-left: 250px; /* Match sidebar width */
+    transition: margin-left 0.3s ease;
+}
+
+/* Chat History Sidebar within the main sidebar */
+.chat-history-sidebar {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    margin-top: 1rem; /* Space from other nav items */
+    padding-top: 1rem;
+    border-top: 1px solid var(--border); /* Separator */
+    overflow-y: auto; /* Enable scrolling for chat list */
+    flex-grow: 1; /* Take up remaining vertical space */
+}
+
+.chat-history-sidebar.visible {
+    display: flex; /* Make it visible */
+}
+
+.new-chat-btn-wrapper {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.new-chat-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.chat-history-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.chat-history-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: var(--text);
+    background-color: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    word-break: break-all; /* Ensure long text breaks */
+    overflow: hidden; /* Hide overflow to keep one line */
+    white-space: nowrap; /* Prevent wrapping initially */
+    text-overflow: ellipsis; /* Add ellipsis for overflow */
+}
+
+.chat-history-item:hover {
+    background-color: rgba(99, 102, 241, 0.05); /* Light blue hover */
+}
+
+.chat-history-item.active {
+    background-color: rgba(99, 102, 241, 0.1); /* Slightly darker for active */
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chat-history-item i {
+    font-size: 1rem;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+.chat-history-item span {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-chat-btn {
+    background: none;
+    border: none;
+    color: var(--light-text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.2rem;
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.2s ease, color 0.2s ease;
+    margin-left: auto; /* Pushes button to the right */
+    flex-shrink: 0;
+}
+
+.chat-history-item:hover .delete-chat-btn {
+    opacity: 1; /* Show on hover of the parent item */
+}
+
+.delete-chat-btn:hover {
+    color: #ef4444; /* Red color on hover */
+}
+
+.no-chats-message, .error-message {
+    color: var(--light-text);
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments for sidebar (if needed) */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        box-shadow: none;
+        padding: 1rem;
+    }
+    .main-content {
+        margin-left: 0;
+    }
+    .chat-history-sidebar {
+        /* Adjust layout for smaller screens if needed */
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+/* Ensure the .nav-item active styling works correctly */
+.nav-links .nav-item.active {
+    background-color: rgba(99, 102, 241, 0.1); /* Your existing active style */
+    color: var(--primary);
+    font-weight: 600;
+}
