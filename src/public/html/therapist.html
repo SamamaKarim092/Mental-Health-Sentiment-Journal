@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Therapist - Mental Health Journal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/therapist.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fas fa-brain"></i>
+            <span>Mental Health Journal</span>
+        </div>
+        <nav class="nav-links">
+            <a href="/" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="journal" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Journal</span>
+            </a>
+            <a href="trend" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Emotional Trends</span>
+            </a>
+            <a href="quote" class="nav-item">
+                <i class="fas fa-lightbulb"></i>
+                <span>Quotes & Tips</span>
+            </a>
+            <a href="therapist" class="nav-item active">
+                <i class="fas fa-user-md"></i>
+                <span>Find Therapist</span>
+            </a>
+            <a href="chat" class="nav-item">
+                <i class="fas fa-comment-dots"></i>
+                <span>AI Assistant</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <h2>Find a Therapist</h2>
+            <p>Connect with qualified mental health professionals who can provide personalized support and guidance for your journey.</p>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <form class="search-form" id="therapistSearchForm">
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" placeholder="Enter city or ZIP code">
+                </div>
+                <div class="form-group">
+                    <label for="specialty">Specialty</label>
+                    <select id="specialty">
+                        <option value="">All Specialties</option>
+                        <option value="anxiety">Anxiety</option>
+                        <option value="depression">Depression</option>
+                        <option value="trauma">Trauma & PTSD</option>
+                        <option value="relationship">Relationship Issues</option>
+                        <option value="addiction">Addiction</option>
+                        <option value="eating">Eating Disorders</option>
+                        <option value="family">Family Therapy</option>
+                        <option value="adolescent">Adolescent Therapy</option>
+                    </select>
+                </div>
+                <button type="submit" class="search-btn">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </form>
+
+            <div class="filter-tags">
+                <div class="filter-tag active" data-filter="all">All</div>
+                <div class="filter-tag" data-filter="online">Online Sessions</div>
+                <div class="filter-tag" data-filter="in-person">In-Person</div>
+                <div class="filter-tag" data-filter="evening">Evening Hours</div>
+                <div class="filter-tag" data-filter="weekend">Weekend Hours</div>
+                <div class="filter-tag" data-filter="insurance">Insurance Accepted</div>
+            </div>
+        </section>
+
+        <!-- Therapists Grid -->
+        <section class="therapists-grid" id="therapistsGrid">
+            <!-- Therapist cards will be populated by JavaScript -->
+        </section>
+
+        <!-- Resources Section -->
+        <section class="resources-section">
+            <h3>Additional Mental Health Resources</h3>
+            <div class="resource-cards">
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <h4>Crisis Hotline</h4>
+                    <p>24/7 support for immediate help<br><strong>Call 988</strong></p>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h4>Crisis Text Line</h4>
+                    <p>Text-based crisis support<br><strong>Text HOME to 741741</strong></p>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h4>Support Groups</h4>
+                    <p>Connect with others who share similar experiences</p>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-book-medical"></i>
+                    </div>
+                    <h4>Self-Help Resources</h4>
+                    <p>Books, apps, and tools for mental wellness</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Add the JavaScript file -->
+    <script src="/js/therapist.js"></script>
+</body>
+</html>

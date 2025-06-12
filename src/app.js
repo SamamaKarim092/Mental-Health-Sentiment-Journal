@@ -26,6 +26,10 @@ app.get('/quote', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'html', 'quote.html'));
 });
 
+app.get('/therapist', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'html', 'therapist.html'));
+});
+
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'html', 'chat.html'));
 });
