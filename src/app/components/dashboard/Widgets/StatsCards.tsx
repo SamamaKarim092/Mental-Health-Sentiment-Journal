@@ -73,8 +73,11 @@ export default function StatsCards() {
       value: `${streak} ${streak === 1 ? "Day" : "Days"}`,
       change: streak > 0 ? "Keep it up!" : "Start journaling today",
       icon: Zap,
-      color: "text-yellow-400",
-      bg: "bg-yellow-400/10",
+      color: "text-amber-600 dark:text-yellow-400",
+      bg: "bg-amber-100/80 dark:bg-yellow-400/10",
+      glow: "hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] dark:hover:shadow-[0_8px_30px_rgba(250,204,21,0.06)] hover:border-amber-500/30 dark:hover:border-yellow-400/30",
+      badgeType: streak > 0 ? "success" : "warning",
+      iconAnim: "group-hover:animate-pulse-glow group-hover:scale-110",
     },
     {
       label: "Average Mood",
@@ -93,8 +96,16 @@ export default function StatsCards() {
               : "Neutral"
           : "No data yet",
       icon: Activity,
-      color: "text-green-400",
-      bg: "bg-green-400/10",
+      color: "text-emerald-600 dark:text-green-400",
+      bg: "bg-emerald-100/80 dark:bg-green-400/10",
+      glow: "hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] dark:hover:shadow-[0_8px_30px_rgba(52,211,153,0.06)] hover:border-emerald-500/30 dark:hover:border-emerald-400/30",
+      badgeType: (() => {
+        if (!statsData || statsData.averageSentiment === null || statsData.averageSentiment === undefined) return "neutral";
+        if (statsData.averageSentiment > 0.1) return "success";
+        if (statsData.averageSentiment < -0.1) return "danger";
+        return "neutral";
+      })(),
+      iconAnim: "group-hover:animate-heartbeat",
     },
     {
       label: "Total Entries",
@@ -104,8 +115,11 @@ export default function StatsCards() {
           ? "Entries recorded"
           : "No entries yet",
       icon: BookIcon,
-      color: "text-blue-400",
-      bg: "bg-blue-400/10",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-100/80 dark:bg-blue-400/10",
+      glow: "hover:shadow-[0_8px_30px_rgba(59,130,246,0.12)] dark:hover:shadow-[0_8px_30px_rgba(96,165,250,0.06)] hover:border-blue-500/30 dark:hover:border-blue-400/30",
+      badgeType: (statsData?.totalEntries || 0) > 0 ? "success" : "neutral",
+      iconAnim: "group-hover:rotate-6 group-hover:scale-105",
     },
     {
       label: "Mood Trend",
@@ -157,10 +171,46 @@ export default function StatsCards() {
         return "Consistent mood";
       })(),
       icon: TrendingUp,
-      color: "text-purple-400",
-      bg: "bg-purple-400/10",
+      color: "text-purple-600 dark:text-purple-400",
+      bg: "bg-purple-100/80 dark:bg-purple-400/10",
+      glow: "hover:shadow-[0_8px_30px_rgba(168,85,247,0.12)] dark:hover:shadow-[0_8px_30px_rgba(192,132,252,0.06)] hover:border-purple-500/30 dark:hover:border-purple-400/30",
+      badgeType: (() => {
+        if (!entries || entries.filter((e: any) => e.sentiment !== null).length < 2) return "neutral";
+        const sorted = [...entries]
+          .filter((e: any) => e.sentiment !== null)
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        const mid = Math.floor(sorted.length / 2);
+        const olderAvg =
+          sorted
+            .slice(0, mid)
+            .reduce((s: number, e: any) => s + e.sentiment, 0) / mid;
+        const newerAvg =
+          sorted.slice(mid).reduce((s: number, e: any) => s + e.sentiment, 0) /
+          (sorted.length - mid);
+        const diff = newerAvg - olderAvg;
+        if (diff > 0.05) return "success";
+        if (diff < -0.05) return "danger";
+        return "neutral";
+      })(),
+      iconAnim: "group-hover:translate-x-0.5 group-hover:-translate-y-0.5",
     },
   ];
+
+  const getBadgeStyles = (type: string) => {
+    switch (type) {
+      case "success":
+        return "text-emerald-600 dark:text-green-400 bg-emerald-500/10 border border-emerald-500/20";
+      case "warning":
+        return "text-amber-600 dark:text-yellow-400 bg-amber-500/10 border border-amber-500/20";
+      case "danger":
+        return "text-rose-600 dark:text-red-400 bg-rose-500/10 border border-rose-500/20";
+      default:
+        return "text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20";
+    }
+  };
 
   if (entriesLoading || statsLoading) {
     return (
@@ -168,11 +218,11 @@ export default function StatsCards() {
         {[...Array(4)].map((_, index) => (
           <div
             key={index}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 animate-pulse"
+            className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 animate-pulse"
           >
-            <div className="h-12 bg-white/10 rounded-xl mb-4"></div>
-            <div className="h-8 bg-white/10 rounded mb-2"></div>
-            <div className="h-4 bg-white/10 rounded w-3/4"></div>
+            <div className="h-12 bg-slate-200/60 dark:bg-white/10 rounded-xl mb-4"></div>
+            <div className="h-8 bg-slate-200/60 dark:bg-white/10 rounded mb-2"></div>
+            <div className="h-4 bg-slate-200/60 dark:bg-white/10 rounded w-3/4"></div>
           </div>
         ))}
       </div>
@@ -186,18 +236,18 @@ export default function StatsCards() {
         return (
           <div
             key={index}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-200"
+            className={`group bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-300 ${stat.glow}`}
           >
             <div className="flex items-start justify-between mb-4">
-              <div className={`p-3 rounded-xl ${stat.bg}`}>
-                <Icon className={`w-6 h-6 ${stat.color}`} />
+              <div className={`p-3 rounded-xl transition-all duration-300 ${stat.bg}`}>
+                <Icon className={`w-6 h-6 transition-all duration-300 ${stat.color} ${stat.iconAnim}`} />
               </div>
-              <span className="text-xs font-medium text-green-400 bg-green-400/10 px-2 py-1 rounded-full">
+              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full ${getBadgeStyles(stat.badgeType)}`}>
                 {stat.change}
               </span>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-1">{stat.value}</h3>
-            <p className="text-sm text-gray-400">{stat.label}</p>
+            <h3 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mb-1">{stat.value}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-gray-400">{stat.label}</p>
           </div>
         );
       })}
