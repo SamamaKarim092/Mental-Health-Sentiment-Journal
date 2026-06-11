@@ -195,9 +195,11 @@ export default function JournalEditor() {
 
   useEffect(() => {
     window.dispatchEvent(
-      new CustomEvent("wordCountUpdate", { detail: { count: wordCount } }),
+      new CustomEvent("wordCountUpdate", {
+        detail: { count: wordCount, charCount: content.length },
+      }),
     );
-  }, [wordCount]);
+  }, [wordCount, content]);
 
   const getEncouragement = () => {
     if (wordCount === 0) return "Ready to listen...";
@@ -597,6 +599,7 @@ export default function JournalEditor() {
                             border: "border-purple-400/20",
                             color_category: color_category, // Store the color category!
                             animation: "", // No animation for AI-suggested moods
+                            glow: "shadow-[0_0_15px_rgba(192,132,252,0.25)] border-purple-400/40",
                           };
                           // Toggle custom mood - make it PRIMARY (first) when selected
                           if (selectedMoods.find((m) => m.label === label)) {
@@ -778,18 +781,18 @@ export default function JournalEditor() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-white/10">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
           <button
             type="button"
             disabled={isSaving}
-            className="px-6 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all font-medium text-sm hover:shadow-sm active:scale-[0.98] duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Draft
           </button>
           <button
             type="submit"
             disabled={isSaving || loading}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-linear-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white font-medium text-sm transition-all duration-150 border border-purple-700 dark:border-purple-600 shadow-sm hover:shadow-md active:scale-[0.98] focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
             {isSaving || loading ? "Saving..." : "Save Entry"}
