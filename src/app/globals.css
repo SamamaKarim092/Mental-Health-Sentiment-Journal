@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --chart-grid: rgba(15, 23, 42, 0.08);
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: rgba(15, 23, 42, 0.1);
+  --chart-tooltip-text: #0f172a;
+  --chart-line: #a855f7;
 }
 
 @theme inline {
@@ -17,6 +24,16 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --chart-grid: rgba(255, 255, 255, 0.1);
+  --chart-tooltip-bg: #1F1229;
+  --chart-tooltip-border: rgba(255, 255, 255, 0.1);
+  --chart-tooltip-text: #ffffff;
+  --chart-line: #c084fc;
 }
 
 body {

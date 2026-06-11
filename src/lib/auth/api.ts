@@ -56,16 +56,33 @@ export async function getAuthUser(request: Request): Promise<AuthUser> {
   // Sync the Supabase user with the local Prisma user table.
   let user = await prisma.user.findUnique({ where: { id: supabaseUser.id } });
 
+  const metadataName = supabaseUser.user_metadata?.display_name || supabaseUser.user_metadata?.full_name || null;
+  const metadataAvatar = supabaseUser.user_metadata?.avatar_url || null;
+
   if (!user) {
     // Some auth providers may not give an email, so create a safe fallback value.
     user = await prisma.user.create({
       data: {
         id: supabaseUser.id,
         email: supabaseUser.email || `${supabaseUser.id}@no-email.invalid`,
-        name: supabaseUser.user_metadata?.full_name || null,
-        avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
+        name: metadataName,
+        avatarUrl: metadataAvatar,
       },
     });
+  } else {
+    // Keep user's name and avatar in sync with Supabase Auth metadata.
+    if (
+      (metadataName && user.name !== metadataName) ||
+      (metadataAvatar && user.avatarUrl !== metadataAvatar)
+    ) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name: metadataName,
+          avatarUrl: metadataAvatar,
+        },
+      });
+    }
   }
 
   return { id: user.id, email: user.email, name: user.name || undefined };

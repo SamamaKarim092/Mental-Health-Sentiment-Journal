@@ -1,150 +1,289 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/context";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Mail, Lock, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred.");
       setLoading(false);
-    } else {
-      router.push("/dashboard");
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError(null);
-    const { error } = await signInWithGoogle();
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setError(error.message);
+      }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred during Google Sign-In.");
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Welcome Back
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Sign in to continue your mental health journey
+  // If loading authentication state, show a clean, elegant loading indicator
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f6f1eb]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-900/10" />
+            <div className="absolute inset-0 rounded-full border-2 border-slate-950 border-t-transparent animate-spin" />
+          </div>
+          <p className="text-slate-500 text-sm font-medium animate-pulse">
+            Connecting to your space...
           </p>
         </div>
+      </div>
+    );
+  }
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              placeholder="you@example.com"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">
-              Or continue with
-            </span>
-          </div>
+  return (
+    <div className="min-h-screen flex bg-[#f6f1eb] text-slate-950 relative overflow-hidden select-none">
+      
+      {/* LEFT PANEL: Premium Visual Panel (Desktop Only) */}
+      <div className="hidden md:flex md:w-1/2 relative overflow-hidden bg-slate-950 items-center justify-center p-12">
+        {/* Background visual image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/auth-visual.png"
+            alt="Mindfulness Abstract"
+            className="w-full h-full object-cover opacity-80 scale-105 transition-transform duration-10000 ease-out hover:scale-100"
+          />
+          {/* Subtle dark gradient overlay to ensure text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
+          <div className="absolute inset-0 bg-radial-gradient(circle_at_center,transparent_20%,rgba(15,23,42,0.4)_100%)" />
         </div>
 
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full py-3 px-4 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path
-              fill="currentColor"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="currentColor"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="currentColor"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-          Continue with Google
-        </button>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/signup"
-            className="text-indigo-600 hover:text-indigo-500 font-medium"
-          >
-            Sign up
+        {/* Floating Brand Elements */}
+        <div className="absolute top-8 left-8 z-10">
+          <Link href="/" className="flex items-center gap-2 text-white/90 hover:text-white transition">
+            <img src="/Logo.png" alt="Logo" className="h-9 w-auto brightness-200 invert" />
+            <span className="font-semibold tracking-wide text-sm mt-1">Mindful Space</span>
           </Link>
-        </p>
+        </div>
+
+        {/* Soothing Mindfulness Quote Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10 max-w-lg bg-white/10 border border-white/20 backdrop-blur-md rounded-3xl p-8 md:p-10 shadow-2xl text-white mt-auto"
+        >
+          <Sparkles className="h-6 w-6 text-yellow-300 mb-6 animate-pulse" />
+          <h2 className="text-3xl font-medium leading-tight mb-4 tracking-tight">
+            "Your mind is a space to explore, not a problem to solve."
+          </h2>
+          <p className="text-white/75 text-base leading-relaxed">
+            Quietly translating your thoughts into clarity. Turn private reflection into daily emotional insight.
+          </p>
+        </motion.div>
+      </div>
+
+      {/* RIGHT PANEL: Authentication Form Panel */}
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center px-6 py-12 md:px-12 lg:px-20 relative z-10">
+        
+        {/* Background Ambient Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div
+            className="absolute top-[-10%] right-[-10%] w-[70vw] md:w-[40vw] h-[70vw] md:h-[40vw] rounded-full bg-yellow-200/20 blur-[100px] animate-pulse"
+            style={{ animationDuration: "12s" }}
+          />
+          <div
+            className="absolute bottom-[-10%] left-[-10%] w-[80vw] md:w-[45vw] h-[80vw] md:h-[45vw] rounded-full bg-pink-200/15 blur-[120px] animate-pulse"
+            style={{ animationDuration: "16s", animationDelay: "2s" }}
+          />
+          <div
+            className="absolute top-[40%] left-[20%] w-[30vw] h-[30vw] rounded-full bg-purple-200/10 blur-[90px] animate-pulse"
+            style={{ animationDuration: "10s", animationDelay: "4s" }}
+          />
+        </div>
+
+        {/* Back navigation button */}
+        <div className="absolute top-6 left-6 z-20">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 border border-slate-900/5 hover:border-slate-900/10 rounded-full bg-white/40 backdrop-blur-xs transition hover:scale-105"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Home
+          </Link>
+        </div>
+
+        {/* Form Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-md bg-white/40 border border-white/60 shadow-[0_32px_64px_rgba(15,23,42,0.04)] backdrop-blur-xl rounded-3xl p-8 md:p-10 relative z-10"
+        >
+          {/* Logo & Subheading */}
+          <div className="text-center mb-8">
+            <div className="inline-flex justify-center items-center gap-2 mb-4">
+              <img src="/Logo.png" alt="Logo" className="h-8 w-auto" />
+              <span className="font-bold tracking-tight text-lg mt-1 text-slate-900">Mindful Space</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome Back
+            </h1>
+            <p className="mt-2 text-sm text-slate-500 font-medium">
+              Sign in to continue your mental health journey
+            </p>
+          </div>
+
+          {/* Toast Error State */}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                className="bg-red-50/80 border border-red-200/50 text-red-700 p-4 rounded-2xl text-xs flex items-start gap-2.5 mb-6 backdrop-blur-xs overflow-hidden"
+              >
+                <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold block mb-0.5">Authentication Issue</span>
+                  {error}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Form Content */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 pl-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </span>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  className="w-full pl-10 pr-4 py-3 bg-white/50 border border-slate-900/10 focus:border-slate-900 rounded-2xl text-sm transition outline-hidden focus:bg-white focus:ring-4 focus:ring-slate-900/5 text-slate-900 placeholder-slate-400"
+                  placeholder="you@example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2 pl-1">
+                <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Password
+                </label>
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full pl-10 pr-4 py-3 bg-white/50 border border-slate-900/10 focus:border-slate-900 rounded-2xl text-sm transition outline-hidden focus:bg-white focus:ring-4 focus:ring-slate-900/5 text-slate-900 placeholder-slate-400"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 px-4 bg-slate-950 hover:bg-slate-800 text-white font-semibold rounded-2xl text-sm transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 shadow-lg shadow-slate-950/10 mt-6 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Separator */}
+          <div className="relative my-7">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-900/10" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-[#fdfbf7] rounded-full text-slate-400 font-medium">
+                or continue with
+              </span>
+            </div>
+          </div>
+
+          {/* Google Button */}
+          <button
+            onClick={handleGoogleSignIn}
+            className="w-full py-3.5 px-4 border border-slate-900/10 bg-white/60 hover:bg-white text-slate-700 font-semibold rounded-2xl text-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 hover:border-slate-900/20 cursor-pointer"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <path
+                fill="#EA4335"
+                d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.467 0-6.277-2.81-6.277-6.277 0-3.467 2.81-6.277 6.277-6.277 1.583 0 3.023.59 4.134 1.558l3.056-3.056C18.665 1.944 15.65.986 12.24.986 6.162.986 1.254 5.894 1.254 11.972s4.908 10.986 10.986 10.986c5.8 0 10.743-4.2 10.743-10.986 0-.62-.066-1.21-.194-1.687H12.24z"
+              />
+            </svg>
+            <span>Google Account</span>
+          </button>
+
+          {/* Navigation to Signup */}
+          <p className="text-center text-xs text-slate-500 font-semibold mt-8">
+            Don't have an account?{" "}
+            <Link
+              href="/signup"
+              className="text-slate-950 underline underline-offset-4 hover:text-slate-800 transition"
+            >
+              Sign up for free
+            </Link>
+          </p>
+        </motion.div>
       </div>
     </div>
   );
