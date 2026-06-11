@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Download, LogOut, Shield, Info, Lock } from "lucide-react";
+import { User, Download, LogOut, Shield, Info, Lock, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { apiFetch } from "@/lib/api/fetcher";
 import { createClient } from "@/lib/supabase/client";
+import { useTheme } from "next-themes";
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
+  const { setTheme, resolvedTheme } = useTheme();
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -22,7 +24,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       setDisplayName(
-        user.user_metadata?.display_name || user.email?.split("@")[0] || "",
+        user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "",
       );
     }
   }, [user]);
@@ -117,35 +119,44 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-1">Settings</h2>
-        <p className="text-gray-400">Manage your account preferences</p>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Settings</h2>
+        <p className="text-slate-500 dark:text-gray-400">Manage your account preferences</p>
       </div>
 
       <div className="space-y-6">
         {/* Profile Section */}
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <User className="w-5 h-5 text-purple-400" />
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             Profile Information
           </h3>
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-purple-500/20 shrink-0">
-              {(user?.email?.charAt(0) || "U").toUpperCase()}
-            </div>
+            {user?.user_metadata?.avatar_url ? (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt="Avatar"
+                className="w-20 h-20 rounded-full object-cover border border-slate-200 dark:border-white/10 shadow-lg shadow-purple-500/20 shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl font-bold text-white shadow-lg shadow-purple-500/20 shrink-0">
+                {((user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email)?.[0] || "U").toUpperCase()}
+              </div>
+            )}
             <div className="space-y-4 flex-1 max-w-md">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-slate-500 dark:text-gray-400 mb-1">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={user?.email || ""}
                   disabled
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-gray-400 cursor-not-allowed"
+                  className="w-full bg-slate-500/5 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-slate-500 dark:text-gray-400 cursor-not-allowed"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-slate-500 dark:text-gray-400 mb-1">
                   Display Name
                 </label>
                 <input
@@ -153,13 +164,13 @@ export default function SettingsPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Enter your name"
-                  className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                  className="w-full bg-slate-500/5 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-slate-800 dark:text-white focus:outline-none focus:border-purple-500/50"
                 />
               </div>
               <button
                 onClick={handleUpdateProfile}
                 disabled={saving}
-                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-xl text-sm font-medium transition-colors border border-purple-500/20 disabled:opacity-50"
+                className="px-4 py-2 bg-purple-550/10 dark:bg-purple-500/20 hover:bg-purple-500/20 dark:hover:bg-purple-500/30 text-purple-700 dark:text-purple-300 rounded-xl text-sm font-medium transition-colors border border-purple-200/50 dark:border-purple-500/20 disabled:opacity-50"
               >
                 {saving ? "Saving..." : saved ? "✓ Saved!" : "Update Profile"}
               </button>
@@ -167,15 +178,54 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Appearance Mode Section */}
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <Sun className="w-5 h-5 text-amber-500 dark:text-yellow-400" />
+            Appearance
+          </h3>
+          <div className="space-y-4">
+            <div className="max-w-md">
+              <p className="text-sm text-slate-500 dark:text-gray-400 mb-3">
+                Customize how Mindful Space looks on your device.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+                    resolvedTheme === "light"
+                      ? "bg-white border-purple-500 text-purple-600 shadow-sm font-semibold"
+                      : "bg-slate-550/5 border-slate-200 text-slate-500 hover:bg-slate-500/10"
+                  }`}
+                >
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  Light Mode
+                </button>
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-all ${
+                    resolvedTheme === "dark"
+                      ? "bg-black/40 border-purple-500 text-purple-400 shadow-sm font-semibold"
+                      : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10"
+                  }`}
+                >
+                  <Moon className="w-4 h-4 text-purple-400" />
+                  Dark Mode
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Security Section (Change Password) */}
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <Lock className="w-5 h-5 text-indigo-400" />
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             Security
           </h3>
           <div className="space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-slate-500 dark:text-gray-400 mb-1">
                 New Password
               </label>
               <input
@@ -183,16 +233,16 @@ export default function SettingsPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password (min. 6 characters)"
-                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500/50"
+                className="w-full bg-slate-500/5 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2 text-slate-800 dark:text-white focus:outline-none focus:border-purple-500/50"
               />
               {passwordError && (
-                <p className="text-red-400 text-sm mt-1">{passwordError}</p>
+                <p className="text-red-500 dark:text-red-400 text-sm mt-1">{passwordError}</p>
               )}
             </div>
             <button
               onClick={handleChangePassword}
               disabled={passwordSaving || newPassword.length < 6}
-              className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl text-sm font-medium transition-colors border border-indigo-500/20 disabled:opacity-50"
+              className="px-4 py-2 bg-indigo-500/10 dark:bg-indigo-500/20 hover:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 rounded-xl text-sm font-medium transition-colors border border-indigo-200/50 dark:border-indigo-500/20 disabled:opacity-50"
             >
               {passwordSaving
                 ? "Updating..."
@@ -204,18 +254,18 @@ export default function SettingsPage() {
         </section>
 
         {/* Data & Privacy */}
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-green-400" />
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-emerald-600 dark:text-green-400" />
             Data & Privacy
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5">
+            <div className="flex items-center justify-between p-4 bg-slate-500/5 dark:bg-black/20 rounded-xl border border-slate-200/50 dark:border-white/5">
               <div className="flex items-center gap-3">
-                <Download className="w-5 h-5 text-gray-400" />
+                <Download className="w-5 h-5 text-slate-500 dark:text-gray-400" />
                 <div>
-                  <p className="text-white font-medium">Export Your Data</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-slate-800 dark:text-white font-medium">Export Your Data</p>
+                  <p className="text-sm text-slate-500 dark:text-gray-500">
                     Download all your journal entries as JSON
                   </p>
                 </div>
@@ -223,16 +273,16 @@ export default function SettingsPage() {
               <button
                 onClick={handleExportData}
                 disabled={exporting}
-                className="px-4 py-2 text-sm font-medium text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-white bg-slate-500/10 dark:bg-white/5 hover:bg-slate-550/20 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10 disabled:opacity-50"
               >
                 {exporting ? "Exporting..." : "Export"}
               </button>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
-              <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 bg-blue-500/5 rounded-xl border border-blue-200/50 dark:border-blue-500/10">
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm text-blue-200">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   Your data is stored securely and is only accessible to you.
                   All journal entries are private and encrypted in transit.
                 </p>
@@ -242,17 +292,17 @@ export default function SettingsPage() {
         </section>
 
         {/* Account Actions */}
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <User className="w-5 h-5 text-red-400" />
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <User className="w-5 h-5 text-red-600 dark:text-red-400" />
             Account
           </h3>
           <div className="space-y-4">
             <button
               onClick={() => signOut()}
-              className="w-full flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-500/10 hover:bg-red-500/10 transition-colors group"
+              className="w-full flex items-center justify-between p-4 bg-red-500/5 rounded-xl border border-red-200/50 dark:border-red-500/10 hover:bg-red-500/10 transition-colors group"
             >
-              <span className="text-red-400 font-medium flex items-center gap-2">
+              <span className="text-red-600 dark:text-red-400 font-medium flex items-center gap-2">
                 <LogOut className="w-4 h-4" />
                 Sign Out
               </span>
