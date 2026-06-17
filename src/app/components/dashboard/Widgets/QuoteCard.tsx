@@ -1,12 +1,30 @@
 "use client";
 
+import { useEffect } from "react";
 import { Quote } from "lucide-react";
 import { useQuote } from "@/hooks/use-api";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QuoteCard() {
-  const { data: quote, isLoading, error } = useQuote();
+  const { data: quote, isLoading, error, mutate } = useQuote();
+
+  // Auto-seed quotes if database is empty
+  useEffect(() => {
+    if (!isLoading && !error && quote === null) {
+      const seedQuotes = async () => {
+        try {
+          const res = await fetch("/api/quotes/seed", { method: "POST" });
+          if (res.ok) {
+            mutate();
+          }
+        } catch (err) {
+          console.error("Auto-seeding quotes failed:", err);
+        }
+      };
+      seedQuotes();
+    }
+  }, [quote, isLoading, error, mutate]);
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-purple-600/10 to-pink-600/10 dark:from-purple-600/20 dark:to-pink-600/20 border border-purple-200/50 dark:border-white/10 rounded-2xl p-6 flex flex-col justify-center min-h-[220px] shadow-xs group hover:shadow-[0_8px_30px_rgba(168,85,247,0.08)] transition-all duration-500">
