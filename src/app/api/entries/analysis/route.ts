@@ -154,6 +154,25 @@ export async function GET(request: NextRequest) {
       snippet: (e.content || "").slice(0, 150),
     }));
 
+    // Chat logs context for AI analysis
+    const recentMessages = await prisma.message.findMany({
+      where: {
+        chat: { userId: user.id },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 15,
+      include: {
+        chat: { select: { title: true } }
+      }
+    });
+
+    const chatSummaries = recentMessages.reverse().map((m) => ({
+      date: m.createdAt.toISOString().split('T')[0],
+      role: m.role,
+      content: m.content.slice(0, 150),
+      chatTitle: m.chat.title,
+    }));
+
     return NextResponse.json({
       totalEntries: entries.length,
       moodBreakdown,
@@ -162,6 +181,7 @@ export async function GET(request: NextRequest) {
       topKeywords,
       writingStreak,
       entrySummaries,
+      chatSummaries,
       period: days,
     });
   } catch (error) {
