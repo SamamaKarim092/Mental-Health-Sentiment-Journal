@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     await getAuthUser(request); // Auth check
     const body = await request.json();
 
-    const { entrySummaries, moodBreakdown, avgSentiment, sentimentTrend, writingStreak, totalEntries, period } = body;
+    const { entrySummaries, chatSummaries, moodBreakdown, avgSentiment, sentimentTrend, writingStreak, totalEntries, period } = body;
 
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey) {
@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!entrySummaries || entrySummaries.length === 0) {
+    if ((!entrySummaries || entrySummaries.length === 0) && (!chatSummaries || chatSummaries.length === 0)) {
       return NextResponse.json({
-        summary: "Not enough journal entries to generate insights. Keep writing!",
+        summary: "Not enough journal entries or chat conversations to generate insights. Keep writing or chatting!",
         insights: [],
         suggestions: [],
       });
@@ -35,30 +35,38 @@ export async function POST(request: NextRequest) {
       `${e.date}: "${e.title}" — Moods: ${(e.moods || []).join(', ') || 'none'}, Sentiment: ${e.sentiment ?? 'N/A'}%`
     ).join('\n');
 
+    const chatLines = (chatSummaries || []).map((m: any) =>
+      `${m.date} - ${m.role === 'USER' ? 'User' : 'AI Coach'} (Chat: "${m.chatTitle || 'Coach Chat'}"): "${m.content}"`
+    ).join('\n');
+
     const moodSummary = Object.entries(moodBreakdown || {})
       .sort((a: any, b: any) => b[1] - a[1])
       .map(([mood, count]) => `${mood}: ${count}`)
       .join(', ');
 
-    const prompt = `You are a compassionate mental health AI analyst. Analyze this user's journal data from the last ${period || 30} days and provide personalized insights.
+    const prompt = `You are a compassionate mental health AI analyst. Analyze this user's journal entries and recent chat conversations with their AI Coach from the last ${period || 30} days, and provide personalized insights. 
+    Synthesize patterns from both their reflective journals and what they discuss with the AI Coach to form a holistic understanding of their emotional journey.
 
 DATA:
-- Total entries: ${totalEntries || 0}
+- Total journal entries: ${totalEntries || 0}
 - Writing streak: ${writingStreak || 0} days
 - Average sentiment: ${avgSentiment !== null && avgSentiment !== undefined ? Math.round(avgSentiment * 100) + '%' : 'N/A'}
 - Sentiment trend: ${sentimentTrend || 'unknown'}
 - Mood breakdown: ${moodSummary || 'none'}
 
-RECENT ENTRIES:
-${entryLines || 'No entries available'}
+RECENT JOURNAL ENTRIES:
+${entryLines || 'No entries available.'}
+
+RECENT CONVERSATIONS WITH AI COACH:
+${chatLines || 'No recent conversations.'}
 
 Respond with ONLY valid JSON (no markdown, no code blocks):
 {
-  "summary": "A warm, empathetic 2-3 sentence summary of their emotional journey this period. Reference specific patterns you see.",
+  "summary": "A warm, empathetic 2-3 sentence summary of their emotional journey this period, synthesizing both journal logs and AI Coach chats. Reference specific patterns you see.",
   "insights": [
-    {"type": "positive", "title": "Short title", "description": "A positive pattern you noticed"},
-    {"type": "warning", "title": "Short title", "description": "A concerning pattern or something to watch"},
-    {"type": "suggestion", "title": "Short title", "description": "An actionable suggestion based on patterns"}
+    {"type": "positive", "title": "Short title", "description": "A positive pattern you noticed from entries/chats"},
+    {"type": "warning", "title": "Short title", "description": "A concerning pattern or something to watch from entries/chats"},
+    {"type": "suggestion", "title": "Short title", "description": "An actionable suggestion based on entries/chats"}
   ],
   "suggestions": [
     "Specific wellness tip 1 based on their data",
