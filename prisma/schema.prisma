@@ -25,6 +25,8 @@ model User {
   // Relations
   entries Entry[]
   chats   Chat[]
+  tasks   Task[]
+  goals   Goal[]
 
   @@map("users")
 }
@@ -142,4 +144,49 @@ model Quote {
 enum QuoteType {
   QUOTE
   TIP
+}
+
+// A daily task belongs to one user and is tied to a specific date.
+// Tasks can be carried over from a previous day if not completed.
+model Task {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  text       String
+  completed  Boolean      @default(false)
+  date       DateTime     @db.Date // The day this task belongs to
+  priority   TaskPriority @default(MEDIUM)
+  pushedFrom DateTime?    @map("pushed_from") @db.Date // If carried over, the original date
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@index([userId, date])
+  @@map("tasks")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Long-term goals are not date-bound. They persist until completed.
+model Goal {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  text      String
+  completed Boolean  @default(false)
+  category  String?  // Optional label like "Health", "Career", "Personal"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("goals")
 }
