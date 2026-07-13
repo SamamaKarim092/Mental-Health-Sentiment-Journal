@@ -40,7 +40,7 @@ function getPrimaryMoodLabel(entry: any): string {
 }
 
 export default function MoodCalendar() {
-  const { data: entries, isLoading } = useEntries();
+  const { data: entries, isLoading } = useEntries({ take: 100 });
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
