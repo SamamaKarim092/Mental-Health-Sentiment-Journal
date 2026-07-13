@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { Quote } from "lucide-react";
+import { Quote, Loader2, RotateCw } from "lucide-react";
 import { useQuote } from "@/hooks/use-api";
-import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function QuoteCard() {
@@ -26,6 +25,11 @@ export default function QuoteCard() {
     }
   }, [quote, isLoading, error, mutate]);
 
+  const handleRefresh = (e: React.MouseEvent) => {
+    e.preventDefault();
+    mutate();
+  };
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-purple-600/10 to-pink-600/10 dark:from-purple-600/20 dark:to-pink-600/20 border border-purple-200/50 dark:border-white/10 rounded-2xl p-6 flex flex-col justify-center min-h-[220px] shadow-xs group hover:shadow-[0_8px_30px_rgba(168,85,247,0.08)] transition-all duration-500">
       
@@ -38,11 +42,20 @@ export default function QuoteCard() {
       </div>
 
       <div className="relative z-10 space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400" />
-          <h3 className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">
-            Daily Inspiration
-          </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400" />
+            <h3 className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-widest">
+              Daily Inspiration
+            </h3>
+          </div>
+          <button
+            onClick={handleRefresh}
+            className="p-1 hover:bg-white/10 dark:hover:bg-white/5 rounded-lg text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-all cursor-pointer"
+            title="Get another quote"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+          </button>
         </div>
         
         {isLoading ? (
@@ -64,7 +77,7 @@ export default function QuoteCard() {
             ) : (
               <>
                 <blockquote className="text-lg md:text-xl font-serif text-slate-700 dark:text-slate-100 italic leading-relaxed font-medium">
-                  &ldquo;{quote.content}&rdquo;
+                  &ldquo;{quote.text || quote.content}&rdquo;
                 </blockquote>
                 {quote.author && (
                   <cite className="text-xs text-slate-500 dark:text-gray-400 not-italic font-bold block text-right tracking-wide">
