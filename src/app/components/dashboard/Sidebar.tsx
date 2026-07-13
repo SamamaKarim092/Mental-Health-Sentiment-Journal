@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   MessageCircle,
+  ListTodo,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const menuItems = [
   { icon: Book, label: "Journal", href: "/dashboard/journal" },
   { icon: MessageCircle, label: "AI Coach", href: "/dashboard/chat" },
   { icon: FileText, label: "Entries", href: "/dashboard/entries" },
+  { icon: ListTodo, label: "Tasks", href: "/dashboard/tasks" },
   { icon: TrendingUp, label: "Trends", href: "/dashboard/trends" },
   { icon: BrainCircuit, label: "Analysis", href: "/dashboard/analysis" },
   { icon: Settings, label: "Settings", href: "/dashboard/settings" },
