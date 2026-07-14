@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   BrainCircuit,
   Lightbulb,
@@ -10,7 +11,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Flame as FireIcon,
   Smile,
   Frown,
   Meh,
@@ -22,6 +22,7 @@ import {
   Award,
   BookOpen,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
 import { useAnalysis } from "@/hooks/use-api";
 import { apiFetch } from "@/lib/api/fetcher";
@@ -54,13 +55,29 @@ const INSIGHT_ICONS: Record<string, any> = {
   suggestion: Lightbulb,
 };
 
-const INSIGHT_STYLES: Record<string, { color: string; bg: string; border: string }> = {
-  positive: { color: "text-green-400", bg: "bg-green-400/10", border: "border-green-400/20" },
-  warning: { color: "text-orange-400", bg: "bg-orange-400/10", border: "border-orange-400/20" },
-  suggestion: { color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
+const INSIGHT_STYLES: Record<string, { color: string; bg: string; border: string; glow: string }> = {
+  positive: { 
+    color: "text-green-400", 
+    bg: "bg-green-500/10", 
+    border: "border-green-500/20",
+    glow: "hover:shadow-green-500/5 hover:border-green-500/40"
+  },
+  warning: { 
+    color: "text-orange-400", 
+    bg: "bg-orange-500/10", 
+    border: "border-orange-500/20",
+    glow: "hover:shadow-orange-500/5 hover:border-orange-500/40"
+  },
+  suggestion: { 
+    color: "text-purple-400", 
+    bg: "bg-purple-500/10", 
+    border: "border-purple-500/20",
+    glow: "hover:shadow-purple-500/5 hover:border-purple-500/40"
+  },
 };
 
 export default function AnalysisPage() {
+  const router = useRouter();
   const [days, setDays] = useState(30);
   const { data: analysis, isLoading, error } = useAnalysis(days);
 
@@ -82,6 +99,7 @@ export default function AnalysisPage() {
           method: "POST",
           body: JSON.stringify({
             entrySummaries: analysis.entrySummaries,
+            chatSummaries: analysis.chatSummaries,
             moodBreakdown: analysis.moodBreakdown,
             avgSentiment: analysis.avgSentiment,
             sentimentTrend: analysis.sentimentTrend,
@@ -124,117 +142,165 @@ export default function AnalysisPage() {
     analysis?.sentimentTrend === "down" ? "text-red-400" : "text-gray-400";
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-7xl mx-auto px-1">
+      {/* Top Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">AI Analysis</h2>
-          <p className="text-gray-400">
-            Deep insights derived from your journal entries and mood patterns
+          <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+            AI Insights & Analysis
+          </h2>
+          <p className="text-gray-400 text-[15px]">
+            Deep cognitive analysis derived from your wellness journal entries.
           </p>
         </div>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-purple-500/50"
-        >
-          <option value={7}>Last 7 Days</option>
-          <option value={30}>Last 30 Days</option>
-          <option value={90}>Last 3 Months</option>
-        </select>
+        <div>
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-xl px-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all cursor-pointer"
+          >
+            <option value={7}>Last 7 Days</option>
+            <option value={30}>Last 30 Days</option>
+            <option value={90}>Last 3 Months</option>
+          </select>
+        </div>
       </div>
 
-      {/* Loading */}
+      {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
+          <p className="text-gray-400 text-sm animate-pulse">Analyzing your mental wellness journey...</p>
         </div>
       )}
 
-      {/* Error */}
+      {/* Error State */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
-          Failed to load analysis. Please refresh the page.
+        <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 text-red-400 text-[15px] flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+          <span>Failed to load your analysis. Please refresh or try again later.</span>
         </div>
       )}
 
-      {/* Empty */}
+      {/* Empty State */}
       {!isLoading && !error && analysis?.totalEntries === 0 && (
-        <div className="text-center py-16 bg-white/5 border border-white/10 rounded-2xl">
-          <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No entries yet</h3>
-          <p className="text-gray-500">Start journaling to unlock AI-powered insights about your emotional patterns!</p>
+        <div className="text-center py-20 bg-white/[0.02] border border-white/10 rounded-3xl backdrop-blur-md">
+          <BookOpen className="w-14 h-14 text-gray-600 mx-auto mb-5" />
+          <h3 className="text-xl font-bold text-white mb-2">No entries yet</h3>
+          <p className="text-gray-400 max-w-md mx-auto text-sm leading-relaxed mb-6">
+            Start writing journal entries to unlock AI-powered summaries, emotional trends, and personalized wellness suggestions!
+          </p>
+          <button
+            onClick={() => router.push("/dashboard/journal")}
+            className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white rounded-xl text-sm font-semibold transition-all shadow-lg"
+          >
+            Write First Entry
+          </button>
         </div>
       )}
 
       {!isLoading && !error && analysis && analysis.totalEntries > 0 && (
         <>
-          {/* Quick Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <BookOpen className="w-4 h-4 text-purple-400" />
-                <span className="text-xs text-gray-400">Entries</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{analysis.totalEntries}</p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-4 h-4 text-yellow-400" />
-                <span className="text-xs text-gray-400">Streak</span>
-              </div>
-              <p className="text-2xl font-bold text-white">
-                {analysis.writingStreak} <span className="text-sm font-normal text-gray-500">days</span>
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs text-gray-400">Avg Sentiment</span>
-              </div>
-              <p className="text-2xl font-bold text-white">
-                {analysis.avgSentiment !== null
-                  ? `${Math.round(analysis.avgSentiment * 100)}%`
-                  : "—"}
-              </p>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-2">
-                {(() => {
-                  const SentIcon = sentimentIcon;
-                  return <SentIcon className={`w-4 h-4 ${sentimentColor}`} />;
-                })()}
-                <span className="text-xs text-gray-400">Trend</span>
-              </div>
-              <p className={`text-2xl font-bold ${sentimentColor}`}>{sentimentLabel}</p>
-            </div>
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                label: "Journal Entries",
+                value: analysis.totalEntries,
+                desc: "Total entries written",
+                icon: BookOpen,
+                color: "text-purple-400 bg-purple-500/10 border-purple-500/10",
+              },
+              {
+                label: "Writing Streak",
+                value: `${analysis.writingStreak} days`,
+                desc: "Consecutive active days",
+                icon: Award,
+                color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/10",
+              },
+              {
+                label: "Avg Sentiment",
+                value: analysis.avgSentiment !== null ? `${Math.round(analysis.avgSentiment * 100)}%` : "N/A",
+                desc: "Positivity score",
+                icon: Sparkles,
+                color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/10",
+              },
+              {
+                label: "Sentiment Trend",
+                value: sentimentLabel,
+                desc: "Emotional direction",
+                icon: sentimentIcon,
+                color: `${sentimentColor} bg-white/5 border-white/5`,
+              },
+            ].map((stat, idx) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white/[0.03] border border-white/10 hover:border-white/15 rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                      {stat.label}
+                    </span>
+                    <div className={`p-2 rounded-lg border ${stat.color}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-extrabold text-white tracking-tight mb-1">
+                      {stat.value}
+                    </h4>
+                    <p className="text-xs text-gray-500 font-medium">{stat.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* AI Summary (with loading shimmer) */}
-          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 border border-white/10 rounded-2xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-purple-500/20 rounded-xl shrink-0">
-                <BrainCircuit className="w-8 h-8 text-purple-400" />
+          {/* AI Summary Banner */}
+          <div className="bg-gradient-to-br from-purple-900/40 via-indigo-950/20 to-transparent border border-purple-500/20 rounded-3xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-xl shadow-purple-500/5">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-start gap-5 relative z-10">
+              <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shrink-0 shadow-lg shadow-purple-500/30">
+                <BrainCircuit className="w-8 h-8 text-white animate-pulse" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  AI Summary
-                </h3>
+              <div className="flex-1 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+                  <h3 className="text-xl font-bold text-white tracking-wide">
+                    AI Wellness Summary
+                  </h3>
+                  {aiData?.summary && (
+                    <button
+                      onClick={() => {
+                        const message = encodeURIComponent(
+                          `Let's discuss my AI wellness analysis summary: "${aiData.summary}". My average sentiment is ${Math.round(analysis.avgSentiment * 100)}% and my trend is ${sentimentLabel.toLowerCase()}.`
+                        );
+                        router.push(`/dashboard/chat?initialMessage=${message}`);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 text-purple-200 hover:text-white rounded-xl text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      Discuss with Coach
+                    </button>
+                  )}
+                </div>
+
                 {aiLoading ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5 py-2">
                     <div className="h-4 bg-white/10 rounded animate-pulse w-full" />
-                    <div className="h-4 bg-white/10 rounded animate-pulse w-4/5" />
-                    <div className="h-4 bg-white/10 rounded animate-pulse w-3/5" />
+                    <div className="h-4 bg-white/10 rounded animate-pulse w-[95%]" />
+                    <div className="h-4 bg-white/10 rounded animate-pulse w-[70%]" />
                   </div>
                 ) : aiData?.summary ? (
-                  <p className="text-gray-300 leading-relaxed">{aiData.summary}</p>
+                  <p className="text-gray-200 text-[15px] sm:text-base leading-relaxed">
+                    {aiData.summary}
+                  </p>
                 ) : (
-                  <p className="text-gray-400 italic">
+                  <p className="text-gray-400 italic text-[15px] leading-relaxed">
                     {analysis.totalEntries < 3
-                      ? "Write at least 3 entries to unlock AI-powered summaries."
-                      : "AI summary will appear here. Make sure the n8n Analyze Entries workflow is set up."}
+                      ? "Write at least 3 entries to unlock detailed AI summaries and wellness insights."
+                      : "Connecting to wellness assistant..."}
                   </p>
                 )}
               </div>
@@ -251,15 +317,31 @@ export default function AnalysisPage() {
                 return (
                   <div
                     key={index}
-                    className={`bg-white/5 border ${style.border} rounded-2xl p-6 hover:bg-white/10 transition-all`}
+                    className={`bg-white/[0.02] border ${style.border} ${style.glow} rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 hover:shadow-md`}
                   >
-                    <div className={`p-3 rounded-xl w-fit mb-4 ${style.bg}`}>
-                      <Icon className={`w-6 h-6 ${style.color}`} />
+                    <div>
+                      <div className={`p-2.5 rounded-xl w-fit mb-4 ${style.bg}`}>
+                        <Icon className={`w-5.5 h-5.5 ${style.color}`} />
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-2">
+                        {insight.title}
+                      </h3>
+                      <p className="text-[15px] text-gray-300 leading-relaxed">
+                        {insight.description}
+                      </p>
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                      {insight.title}
-                    </h3>
-                    <p className="text-sm text-gray-400">{insight.description}</p>
+                    <button
+                      onClick={() => {
+                        const message = encodeURIComponent(
+                          `I'd like to talk to you about this specific insight from my journal: "${insight.title}" — "${insight.description}".`
+                        );
+                        router.push(`/dashboard/chat?initialMessage=${message}`);
+                      }}
+                      className="mt-5 text-xs font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 cursor-pointer self-start group/btn"
+                    >
+                      Discuss this insight
+                      <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
+                    </button>
                   </div>
                 );
               })}
@@ -270,11 +352,11 @@ export default function AnalysisPage() {
           {aiLoading && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                  <div className="w-12 h-12 bg-white/10 rounded-xl mb-4 animate-pulse" />
+                <div key={i} className="bg-white/[0.02] border border-white/10 rounded-2xl p-6">
+                  <div className="w-11 h-11 bg-white/10 rounded-xl mb-4 animate-pulse" />
                   <div className="h-5 bg-white/10 rounded w-2/3 mb-3 animate-pulse" />
-                  <div className="h-3 bg-white/10 rounded w-full mb-2 animate-pulse" />
-                  <div className="h-3 bg-white/10 rounded w-4/5 animate-pulse" />
+                  <div className="h-3.5 bg-white/10 rounded w-full mb-2 animate-pulse" />
+                  <div className="h-3.5 bg-white/10 rounded w-[80%] animate-pulse" />
                 </div>
               ))}
             </div>
@@ -283,10 +365,10 @@ export default function AnalysisPage() {
           {/* Mood Breakdown + Keywords Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Mood Breakdown */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-6">Mood Breakdown</h3>
+            <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-sm">
+              <h3 className="text-lg font-bold text-white mb-6">Mood Distribution</h3>
               {moodEntries.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {moodEntries.map(([mood, count]: any) => {
                     const percent = totalMoodTags > 0 ? Math.round((count / totalMoodTags) * 100) : 0;
                     const MIcon = MOOD_ICONS[mood] || Meh;
@@ -296,7 +378,7 @@ export default function AnalysisPage() {
                           className="w-5 h-5 shrink-0"
                           style={{ color: MOOD_COLORS[mood] || "#9CA3AF" }}
                         />
-                        <span className="text-sm text-gray-300 w-20 shrink-0">{mood}</span>
+                        <span className="text-sm font-semibold text-gray-300 w-20 shrink-0">{mood}</span>
                         <div className="flex-1 h-3 bg-white/5 rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
@@ -306,7 +388,7 @@ export default function AnalysisPage() {
                             }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500 w-12 text-right">
+                        <span className="text-xs font-semibold text-gray-500 w-12 text-right">
                           {count} ({percent}%)
                         </span>
                       </div>
@@ -314,27 +396,26 @@ export default function AnalysisPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">No mood data available yet.</p>
+                <p className="text-gray-500 text-sm italic">No mood distribution statistics available.</p>
               )}
             </div>
 
             {/* Sentiment Keywords */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-6">
-                Your Most Used Words
+            <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-sm">
+              <h3 className="text-lg font-bold text-white mb-6">
+                Your Frequently Used Words
               </h3>
               {analysis.topKeywords && analysis.topKeywords.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {analysis.topKeywords.map((kw: any, i: number) => {
-                    // Scale size based on count
                     const maxCount = analysis.topKeywords[0].count;
                     const ratio = kw.count / maxCount;
-                    const size = ratio > 0.7 ? "text-base px-4 py-2" : ratio > 0.4 ? "text-sm px-3 py-1.5" : "text-xs px-3 py-1.5";
-                    const opacity = ratio > 0.7 ? "text-purple-300 border-purple-500/30" : ratio > 0.4 ? "text-gray-300 border-white/15" : "text-gray-400 border-white/10";
+                    const size = ratio > 0.7 ? "text-base px-4 py-2" : ratio > 0.4 ? "text-sm px-3.5 py-1.5" : "text-xs px-3 py-1.5";
+                    const opacity = ratio > 0.7 ? "text-purple-300 border-purple-500/30 bg-purple-500/5" : ratio > 0.4 ? "text-gray-300 border-white/15" : "text-gray-400 border-white/10";
                     return (
                       <span
                         key={i}
-                        className={`rounded-full bg-white/5 border ${opacity} ${size} hover:border-purple-500/50 hover:text-purple-300 transition-all cursor-default`}
+                        className={`rounded-xl border ${opacity} ${size} hover:border-purple-500/50 hover:text-purple-300 hover:scale-[1.03] transition-all cursor-default font-medium`}
                         title={`Used ${kw.count} times`}
                       >
                         {kw.word}
@@ -343,27 +424,27 @@ export default function AnalysisPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm">Write more to see your frequently used words.</p>
+                <p className="text-gray-500 text-sm italic">Write more entries to compile your vocabulary trends.</p>
               )}
             </div>
           </div>
 
-          {/* AI Suggestions */}
+          {/* AI Wellness Suggestions */}
           {aiData?.suggestions && aiData.suggestions.length > 0 && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <Lightbulb className="w-5 h-5 text-yellow-400" />
+                <div className="p-2 bg-yellow-500/15 rounded-xl border border-yellow-500/10">
+                  <Lightbulb className="w-5.5 h-5.5 text-yellow-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Wellness Suggestions</h3>
+                <h3 className="text-lg font-bold text-white">Wellness Recommendations</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiData.suggestions.map((suggestion: string, i: number) => (
                   <div
                     key={i}
-                    className="flex items-start gap-3 bg-white/5 rounded-xl p-4 border border-white/5"
+                    className="flex items-start gap-3 bg-white/[0.01] hover:bg-white/[0.03] rounded-2xl p-4 border border-white/5 hover:border-white/10 transition-all duration-300"
                   >
-                    <span className="text-yellow-400 text-lg mt-0.5">💡</span>
+                    <span className="text-yellow-400 text-base mt-0.5 shrink-0">💡</span>
                     <p className="text-sm text-gray-300 leading-relaxed">{suggestion}</p>
                   </div>
                 ))}
