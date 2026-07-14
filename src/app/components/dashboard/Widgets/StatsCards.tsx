@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useEntries, useEntryStats } from "@/hooks/use-api";
 
 export default function StatsCards() {
-  const { data: entries, isLoading: entriesLoading } = useEntries();
+  const { data: entries, isLoading: entriesLoading } = useEntries({ take: 100 });
   const { data: statsData, isLoading: statsLoading } = useEntryStats();
 
   // Calculate current streak from entries
@@ -80,29 +80,42 @@ export default function StatsCards() {
       iconAnim: "group-hover:animate-pulse-glow group-hover:scale-110",
     },
     {
-      label: "Average Mood",
-      value:
-        statsData?.averageSentiment !== null &&
-        statsData?.averageSentiment !== undefined
-          ? (statsData.averageSentiment * 10).toFixed(1)
-          : "N/A",
-      change:
-        statsData?.averageSentiment !== null &&
-        statsData?.averageSentiment !== undefined
-          ? statsData.averageSentiment > 0
-            ? "Positive sentiment"
-            : statsData.averageSentiment < 0
-              ? "Needs attention"
-              : "Neutral"
-          : "No data yet",
+      label: "Average Mood (-10 to +10)",
+      value: (() => {
+        if (statsData?.averageSentiment === null || statsData?.averageSentiment === undefined) return "N/A";
+        const val = statsData.averageSentiment * 10;
+        const formatted = val.toFixed(1);
+        return val > 0 ? `+${formatted}` : formatted;
+      })(),
+      change: (() => {
+        if (statsData?.averageSentiment === null || statsData?.averageSentiment === undefined) return "No data yet";
+        if (statsData.averageSentiment > 0.05) return "Positive";
+        if (statsData.averageSentiment < -0.05) return "Negative";
+        return "Neutral";
+      })(),
       icon: Activity,
-      color: "text-emerald-600 dark:text-green-400",
-      bg: "bg-emerald-100/80 dark:bg-green-400/10",
-      glow: "hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] dark:hover:shadow-[0_8px_30px_rgba(52,211,153,0.06)] hover:border-emerald-500/30 dark:hover:border-emerald-400/30",
+      color: (() => {
+        if (!statsData || statsData.averageSentiment === null || statsData.averageSentiment === undefined) return "text-blue-600 dark:text-blue-400";
+        if (statsData.averageSentiment > 0.05) return "text-emerald-600 dark:text-green-400";
+        if (statsData.averageSentiment < -0.05) return "text-rose-600 dark:text-red-400";
+        return "text-slate-600 dark:text-gray-400";
+      })(),
+      bg: (() => {
+        if (!statsData || statsData.averageSentiment === null || statsData.averageSentiment === undefined) return "bg-blue-100/80 dark:bg-blue-400/10";
+        if (statsData.averageSentiment > 0.05) return "bg-emerald-100/80 dark:bg-green-400/10";
+        if (statsData.averageSentiment < -0.05) return "bg-rose-100/80 dark:bg-red-400/10";
+        return "bg-slate-100/80 dark:bg-white/5";
+      })(),
+      glow: (() => {
+        if (!statsData || statsData.averageSentiment === null || statsData.averageSentiment === undefined) return "hover:shadow-[0_8px_30px_rgba(59,130,246,0.12)]";
+        if (statsData.averageSentiment > 0.05) return "hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] dark:hover:shadow-[0_8px_30px_rgba(52,211,153,0.06)] hover:border-emerald-500/30 dark:hover:border-emerald-400/30";
+        if (statsData.averageSentiment < -0.05) return "hover:shadow-[0_8px_30px_rgba(244,63,94,0.12)] dark:hover:shadow-[0_8px_30px_rgba(251,113,133,0.06)] hover:border-rose-500/30 dark:hover:border-rose-400/30";
+        return "hover:shadow-[0_8px_30px_rgba(100,116,139,0.12)]";
+      })(),
       badgeType: (() => {
         if (!statsData || statsData.averageSentiment === null || statsData.averageSentiment === undefined) return "neutral";
-        if (statsData.averageSentiment > 0.1) return "success";
-        if (statsData.averageSentiment < -0.1) return "danger";
+        if (statsData.averageSentiment > 0.05) return "success";
+        if (statsData.averageSentiment < -0.05) return "danger";
         return "neutral";
       })(),
       iconAnim: "group-hover:animate-heartbeat",
