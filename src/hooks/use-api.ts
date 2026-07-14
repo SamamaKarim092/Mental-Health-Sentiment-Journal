@@ -53,3 +53,16 @@ export function useQuote() {
     revalidateOnReconnect: false,
   });
 }
+
+// ===== Tasks =====
+
+export function useTasks(date: string) {
+  return useSWR<any[]>(date ? `/api/tasks?date=${date}` : null, fetcher, { refreshInterval: 5000 });
+}
+
+// ===== Goals =====
+
+export function useGoals() {
+  return useSWR<any[]>('/api/goals', fetcher, { refreshInterval: 10000 });
+}
+
