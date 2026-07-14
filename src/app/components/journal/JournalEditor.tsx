@@ -15,9 +15,10 @@ import {
   Coffee,
   Sparkles,
   Flame,
+  MessageCircle,
+  X,
 } from "lucide-react";
 import { detectMoodFromText } from "@/lib/mood-detection";
-import CoachBubble from "./CoachBubble";
 import {
   createEntry as apiCreateEntry,
   suggestMood as apiSuggestMood,
@@ -474,12 +475,10 @@ export default function JournalEditor() {
         const primaryMood =
           selectedMoods[0]?.label || aiSuggestions[0]?.label || "something";
         const suggestions: Record<string, string> = {
-          SAD: "It sounds like you're going through a tough time. Sometimes talking it out can help.",
-          ANXIOUS:
-            "I can sense some worry in your words. Would you like to explore these feelings together?",
-          STRESSED:
-            "That sounds really stressful. Sometimes it helps to talk through what's weighing on you.",
-          default: `It seems like you have a lot on your mind about feeling ${primaryMood.toLowerCase()}. I'm here if you want to chat.`,
+          SAD: "Going through a tough time? Let's talk about it.",
+          ANXIOUS: "Feeling worried or anxious? Let's explore these feelings.",
+          STRESSED: "Feeling weighed down or stressed? Let's talk.",
+          default: `Feeling ${primaryMood.toLowerCase()}? Let's talk about it.`,
         };
 
         const matchedEmotion = Object.keys(suggestions).find(
@@ -687,6 +686,36 @@ export default function JournalEditor() {
               );
             })}
           </div>
+
+          {/* Inline Coach Suggestion banner */}
+          {showCoachBubble && coachSuggestion && (
+            <div className="mt-4 flex items-center justify-between p-3 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/25 rounded-xl shadow-md">
+              <div className="flex items-center gap-2 pr-4">
+                <Sparkles className="w-4 h-4 text-purple-400 animate-pulse flex-shrink-0" />
+                <p className="text-xs text-purple-200 font-medium">
+                  {coachSuggestion}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleTalkAboutIt}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110 text-white rounded-lg text-xs font-semibold shadow-md transition-all active:scale-[0.98]"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Wanna talk?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCoachBubble(false)}
+                  className="p-1 text-gray-500 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                  title="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Title Input */}
@@ -800,15 +829,6 @@ export default function JournalEditor() {
         </div>
       </form>
 
-      {/* Coach Bubble - appears when emotional content is detected */}
-      <CoachBubble
-        suggestion={coachSuggestion}
-        emotion={detectedEmotion}
-        onTalkClick={handleTalkAboutIt}
-        onDismiss={() => setShowCoachBubble(false)}
-        isVisible={showCoachBubble}
-        isLoading={isSaving}
-      />
     </div>
   );
 }
