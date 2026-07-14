@@ -23,10 +23,11 @@ function ChatContent() {
   const searchParams = useSearchParams();
   const contextEntryId = searchParams.get("contextEntryId");
   const chatIdParam = searchParams.get("chatId");
+  const initialMessageParam = searchParams.get("initialMessage");
 
   const { currentMood } = useMood();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [inputMessage, setInputMessage] = useState(initialMessageParam || "");
   const [chatId, setChatId] = useState<string | null>(chatIdParam);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -153,6 +154,48 @@ function ChatContent() {
     }
   };
 
+  const renderFormattedContent = (content: string) => {
+    const lines = content.split('\n');
+    return lines.map((line, lineIndex) => {
+      // Match lists like "1. **Title**" or just "1. Title"
+      const listMatch = line.match(/^(\d+\.\s+)(.*)$/);
+      
+      const parseInline = (text: string) => {
+        const parts = text.split(/(\*\*.*?\*\*)/g);
+        return parts.map((part, partIndex) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            const boldText = part.slice(2, -2);
+            return (
+              <strong 
+                key={partIndex} 
+                className="font-bold text-[15px] text-purple-200 bg-purple-500/10 px-1.5 py-0.5 rounded shadow-sm"
+              >
+                {boldText}
+              </strong>
+            );
+          }
+          return part;
+        });
+      };
+
+      if (listMatch) {
+        const [, number, rest] = listMatch;
+        return (
+          <div key={lineIndex} className="flex gap-2 my-2 pl-1 leading-relaxed">
+            <span className="font-semibold text-purple-400 min-w-[20px]">{number}</span>
+            <span className="flex-1 text-sm">{parseInline(rest)}</span>
+          </div>
+        );
+      }
+
+      return (
+        <div key={lineIndex} className={`text-sm leading-relaxed ${line.trim() === '' ? 'h-3' : 'my-1'}`}>
+          {parseInline(line)}
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
@@ -221,9 +264,9 @@ function ChatContent() {
                       </span>
                     </div>
                   )}
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {message.content}
-                  </p>
+                  <div className="space-y-1">
+                    {renderFormattedContent(message.content)}
+                  </div>
                 </div>
               </motion.div>
             ))}
