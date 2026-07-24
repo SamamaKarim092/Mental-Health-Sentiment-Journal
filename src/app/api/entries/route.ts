@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const entries = await prisma.entry.findMany({
       where,
+      include: { attachments: true },
       orderBy: { createdAt: 'desc' },
       skip,
       take,
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     const user = await getAuthUser(request);
     const body = await request.json();
 
-    const { title, content, mood, customMoodLabel, moodLabels, tags } = body;
+    const { title, content, mood, customMoodLabel, moodLabels, tags, attachments } = body;
 
     if (!title || !content) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
@@ -62,7 +63,18 @@ export async function POST(request: NextRequest) {
         customMoodLabel: customMoodLabel || null,
         moodLabels: moodLabels || [],
         tags: tags || [],
+        attachments: Array.isArray(attachments) && attachments.length > 0
+          ? {
+              create: attachments.map((att: any) => ({
+                fileName: att.fileName || att.name || 'attachment',
+                fileUrl: att.fileUrl || att.url,
+                fileType: att.fileType || 'image/png',
+                fileSize: att.fileSize || 0,
+              })),
+            }
+          : undefined,
       },
+      include: { attachments: true },
     });
 
     // Fire-and-forget: trigger n8n sentiment analysis
