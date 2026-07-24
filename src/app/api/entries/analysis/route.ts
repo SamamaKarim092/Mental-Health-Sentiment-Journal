@@ -173,6 +173,53 @@ export async function GET(request: NextRequest) {
       chatTitle: m.chat.title,
     }));
 
+    // Fetch user tasks for the period
+    const tasks = await prisma.task.findMany({
+      where: { userId: user.id, date: { gte: startDate } },
+      orderBy: { date: 'desc' },
+    });
+
+    const completedTasksCount = tasks.filter((t) => t.completed).length;
+    const taskCompletionRate = tasks.length > 0 ? Math.round((completedTasksCount / tasks.length) * 100) : 0;
+    const pushedTasksCount = tasks.filter((t) => t.pushedFrom !== null).length;
+    const taskPriorityBreakdown = {
+      HIGH: tasks.filter((t) => t.priority === 'HIGH').length,
+      MEDIUM: tasks.filter((t) => t.priority === 'MEDIUM').length,
+      LOW: tasks.filter((t) => t.priority === 'LOW').length,
+    };
+
+    const taskStats = {
+      totalTasks: tasks.length,
+      completedTasks: completedTasksCount,
+      completionRate: taskCompletionRate,
+      pushedTasksCount,
+      priorityBreakdown: taskPriorityBreakdown,
+      recentTasks: tasks.slice(0, 15).map((t) => ({
+        text: t.text,
+        completed: t.completed,
+        priority: t.priority,
+        date: t.date.toISOString().split('T')[0],
+      })),
+    };
+
+    // Fetch user long-term goals
+    const goals = await prisma.goal.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const completedGoalsCount = goals.filter((g) => g.completed).length;
+    const goalStats = {
+      totalGoals: goals.length,
+      completedGoals: completedGoalsCount,
+      completionRate: goals.length > 0 ? Math.round((completedGoalsCount / goals.length) * 100) : 0,
+      goalsList: goals.map((g) => ({
+        text: g.text,
+        completed: g.completed,
+        category: g.category || 'General',
+      })),
+    };
+
     return NextResponse.json({
       totalEntries: entries.length,
       moodBreakdown,
@@ -182,6 +229,8 @@ export async function GET(request: NextRequest) {
       writingStreak,
       entrySummaries,
       chatSummaries,
+      taskStats,
+      goalStats,
       period: days,
     });
   } catch (error) {
