@@ -50,14 +50,31 @@ model Entry {
   updatedAt DateTime        @updatedAt @map("updated_at")
 
   // Relations
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   attachments Attachment[]
-  chats       Chat[]        // Chats started from this entry
+  chats       Chat[]          // Chats started from this entry
+  embedding   EntryEmbedding? // RAG vector embedding
 
   @@index([userId])
   @@index([createdAt])
   @@index([mood])
   @@map("entries")
+}
+
+// Vector embedding for RAG (Retrieval-Augmented Generation).
+// Stores a mathematical vector representation of each journal entry
+// so the AI Coach can semantically search past entries when answering questions.
+model EntryEmbedding {
+  id        String   @id @default(uuid()) @db.Uuid
+  entryId   String   @unique @map("entry_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  vector    Float[]
+  createdAt DateTime @default(now()) @map("created_at")
+
+  entry Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("entry_embeddings")
 }
 
 // Basic mood groups used across the app.
