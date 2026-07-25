@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, AuthError } from '@/lib/auth/api';
 import { Mood, Prisma } from '@prisma/client';
+import { storeEntryEmbedding } from '@/lib/rag';
 
 export async function GET(request: NextRequest) {
   try {
@@ -79,6 +80,9 @@ export async function POST(request: NextRequest) {
 
     // Fire-and-forget: trigger n8n sentiment analysis
     triggerSentimentAnalysis(entry.id, entry.content, entry.title);
+
+    // Fire-and-forget: generate RAG embedding for semantic search
+    storeEntryEmbedding(entry.id, user.id, `${entry.title}. ${entry.content}`);
 
     return NextResponse.json(entry, { status: 201 });
   } catch (error) {
