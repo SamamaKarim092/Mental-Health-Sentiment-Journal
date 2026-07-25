@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, AuthError } from '@/lib/auth/api';
 import { MessageRole } from '@prisma/client';
+import { findRelevantEntries, type RelevantEntry } from '@/lib/rag';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,20 +40,30 @@ export async function POST(request: NextRequest) {
       data: { chatId, role: MessageRole.USER, content },
     });
 
-    // Get AI response
-    const aiResponse = await getAIResponse(chatId, content);
+    // Get AI response with RAG semantic retrieval
+    const { response: aiResponse, ragEntries } = await getAIResponse(chatId, content, user.id);
 
     await prisma.message.create({
       data: { chatId, role: MessageRole.AI, content: aiResponse },
     });
 
-    // Return full chat
+    // Return full chat with RAG metadata
     const updatedChat = await prisma.chat.findUnique({
       where: { id: chatId },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
-    return NextResponse.json(updatedChat);
+    return NextResponse.json({
+      ...updatedChat,
+      ragContext: ragEntries.length > 0 ? {
+        entriesUsed: ragEntries.length,
+        entries: ragEntries.map(e => ({
+          title: e.title,
+          date: e.createdAt,
+          relevance: e.similarityPercent,
+        })),
+      } : null,
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: 401 });
@@ -62,7 +73,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getAIResponse(chatId: string, userMessage: string): Promise<string> {
+async function getAIResponse(
+  chatId: string,
+  userMessage: string,
+  userId: string
+): Promise<{ response: string; ragEntries: RelevantEntry[] }> {
   const n8nWebhookUrl = process.env.N8N_CHAT_WEBHOOK_URL;
   const groqKey = process.env.GROQ_API_KEY;
 
@@ -117,6 +132,14 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
       }));
     }
 
+    // ── RAG: Retrieve relevant past journal entries ──────────────────
+    let ragEntries: RelevantEntry[] = [];
+    try {
+      ragEntries = await findRelevantEntries(userId, userMessage, 3);
+    } catch (ragError) {
+      console.warn('RAG retrieval failed, continuing without context:', ragError);
+    }
+
     // Try n8n first if configured
     if (n8nWebhookUrl) {
       try {
@@ -128,7 +151,20 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
           response = await fetch(n8nWebhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage, chatHistory, contextEntry, userTasks, userGoals }),
+            body: JSON.stringify({
+              message: userMessage,
+              chatHistory,
+              contextEntry,
+              userTasks,
+              userGoals,
+              ragContext: ragEntries.length > 0 ? ragEntries.map(e => ({
+                title: e.title,
+                content: e.content.slice(0, 300),
+                date: e.createdAt,
+                relevance: e.similarityPercent,
+                moodLabels: e.moodLabels,
+              })) : undefined,
+            }),
             signal: controller.signal,
           });
         } finally {
@@ -139,7 +175,7 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
           const data = await response.json();
           const result = Array.isArray(data) ? data[0] : data;
           const n8nResponse = result?.response;
-          if (n8nResponse) return n8nResponse;
+          if (n8nResponse) return { response: n8nResponse, ragEntries };
         }
         // If n8n didn't return a valid response, fall through to Groq
         console.warn('n8n returned invalid response, falling back to Groq');
@@ -151,7 +187,10 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
     // Direct Groq fallback
     if (!groqKey) {
       console.warn('Neither N8N_CHAT_WEBHOOK_URL nor GROQ_API_KEY is configured');
-      return "I'm sorry, the AI service is not configured. Please set up either N8N_CHAT_WEBHOOK_URL or GROQ_API_KEY in your environment.";
+      return {
+        response: "I'm sorry, the AI service is not configured. Please set up either N8N_CHAT_WEBHOOK_URL or GROQ_API_KEY in your environment.",
+        ragEntries: [],
+      };
     }
 
     // Build a rich system prompt with all user context
@@ -169,6 +208,19 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
     if (userGoals.length > 0) {
       const goalSummary = userGoals.map(g => `${g.completed ? '✅' : '🎯'} (${g.category}) ${g.text}`).join('; ');
       systemPrompt += `\n\nUser's wellness goals: ${goalSummary}`;
+    }
+
+    // ── RAG: Inject retrieved journal entries into system prompt ─────
+    if (ragEntries.length > 0) {
+      const ragContext = ragEntries.map(e => {
+        const date = new Date(e.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric',
+        });
+        const moods = e.moodLabels.length > 0 ? ` | Moods: ${e.moodLabels.join(', ')}` : '';
+        return `- [${date}] "${e.title}"${moods}: "${e.content.slice(0, 400)}" (Relevance: ${e.similarityPercent}%)`;
+      }).join('\n');
+
+      systemPrompt += `\n\nRELEVANT PAST JOURNAL ENTRIES (Retrieved via RAG semantic search — use these to give grounded, accurate answers about the user's history. Reference specific dates and details when relevant):\n${ragContext}`;
     }
 
     // Convert chat history to Groq message format
@@ -212,14 +264,20 @@ async function getAIResponse(chatId: string, userMessage: string): Promise<strin
     if (!groqResponse.ok) {
       const errorText = await groqResponse.text();
       console.error('Groq API error:', groqResponse.status, errorText);
-      return "I'm having trouble connecting right now. Please try again in a moment.";
+      return { response: "I'm having trouble connecting right now. Please try again in a moment.", ragEntries: [] };
     }
 
     const groqData = await groqResponse.json();
     const aiContent = groqData.choices?.[0]?.message?.content?.trim();
-    return aiContent || "I'm here to listen. Could you tell me more?";
+    return {
+      response: aiContent || "I'm here to listen. Could you tell me more?",
+      ragEntries,
+    };
   } catch (error) {
     console.error('Error getting AI response:', error);
-    return "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
+    return {
+      response: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+      ragEntries: [],
+    };
   }
 }
