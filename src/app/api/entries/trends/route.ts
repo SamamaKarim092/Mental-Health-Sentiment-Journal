@@ -20,6 +20,12 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'asc' },
     });
 
+    // Fetch user tasks for the period
+    const tasks = await prisma.task.findMany({
+      where: { userId: user.id, date: { gte: startDate } },
+      orderBy: { date: 'asc' },
+    });
+
     const trendMap = new Map<
       string,
       {
@@ -29,6 +35,8 @@ export async function GET(request: NextRequest) {
         sentiments: number[];
         moodCounts: Record<string, number>;
         entryCount: number;
+        totalTasks: number;
+        completedTasks: number;
       }
     >();
 
@@ -42,6 +50,8 @@ export async function GET(request: NextRequest) {
           sentiments: [],
           moodCounts: {},
           entryCount: 0,
+          totalTasks: 0,
+          completedTasks: 0,
         });
       }
       const dayData = trendMap.get(dateKey)!;
@@ -58,7 +68,6 @@ export async function GET(request: NextRequest) {
       // Count each mood label (from moodLabels array)
       if (entry.moodLabels && entry.moodLabels.length > 0) {
         for (const label of entry.moodLabels) {
-          // Only count predefined moods for trends
           if (PREDEFINED_MOODS.includes(label)) {
             dayData.moodCounts[label] = (dayData.moodCounts[label] || 0) + 1;
           }
@@ -66,26 +75,49 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const trends = Array.from(trendMap.entries()).map(([date, data]) => ({
-      date,
-      positiveCount: data.positive,
-      neutralCount: data.neutral,
-      negativeCount: data.negative,
-      entryCount: data.entryCount,
-      averageSentiment:
-        data.sentiments.length > 0
-          ? Math.round((data.sentiments.reduce((a, b) => a + b, 0) / data.sentiments.length) * 100) / 100
-          : null,
-      // Mood label counts
-      Happy: data.moodCounts["Happy"] || 0,
-      Neutral: data.moodCounts["Neutral"] || 0,
-      Sad: data.moodCounts["Sad"] || 0,
-      Anxious: data.moodCounts["Anxious"] || 0,
-      Energetic: data.moodCounts["Energetic"] || 0,
-      Calm: data.moodCounts["Calm"] || 0,
-      Grateful: data.moodCounts["Grateful"] || 0,
-      Angry: data.moodCounts["Angry"] || 0,
-    }));
+    // Populate task completion data into trendMap
+    for (const task of tasks) {
+      const dateKey = task.date.toISOString().split('T')[0];
+      if (!trendMap.has(dateKey)) {
+        trendMap.set(dateKey, {
+          positive: 0, neutral: 0, negative: 0,
+          sentiments: [],
+          moodCounts: {},
+          entryCount: 0,
+          totalTasks: 0,
+          completedTasks: 0,
+        });
+      }
+      const dayData = trendMap.get(dateKey)!;
+      dayData.totalTasks++;
+      if (task.completed) dayData.completedTasks++;
+    }
+
+    const trends = Array.from(trendMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, data]) => ({
+        date,
+        positiveCount: data.positive,
+        neutralCount: data.neutral,
+        negativeCount: data.negative,
+        entryCount: data.entryCount,
+        totalTasks: data.totalTasks,
+        completedTasks: data.completedTasks,
+        taskCompletionRate: data.totalTasks > 0 ? Math.round((data.completedTasks / data.totalTasks) * 100) : null,
+        averageSentiment:
+          data.sentiments.length > 0
+            ? Math.round((data.sentiments.reduce((a, b) => a + b, 0) / data.sentiments.length) * 100) / 100
+            : null,
+        // Mood label counts
+        Happy: data.moodCounts["Happy"] || 0,
+        Neutral: data.moodCounts["Neutral"] || 0,
+        Sad: data.moodCounts["Sad"] || 0,
+        Anxious: data.moodCounts["Anxious"] || 0,
+        Energetic: data.moodCounts["Energetic"] || 0,
+        Calm: data.moodCounts["Calm"] || 0,
+        Grateful: data.moodCounts["Grateful"] || 0,
+        Angry: data.moodCounts["Angry"] || 0,
+      }));
 
     return NextResponse.json(trends);
   } catch (error) {
