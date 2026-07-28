@@ -10,8 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     await getAuthUser(request); // Auth check
     const body = await request.json();
-
-    const { entrySummaries, chatSummaries, moodBreakdown, avgSentiment, sentimentTrend, writingStreak, totalEntries, period, taskStats, goalStats } = body;
+    const { entrySummaries, chatSummaries, moodBreakdown, avgSentiment, sentimentTrend, writingStreak, totalEntries, period, taskStats, goalStats, ragClusters } = body;
 
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey) {
@@ -26,8 +25,9 @@ export async function POST(request: NextRequest) {
     const hasChatData = chatSummaries && chatSummaries.length > 0;
     const hasTaskData = taskStats && taskStats.totalTasks > 0;
     const hasGoalData = goalStats && goalStats.totalGoals > 0;
+    const hasRagData = ragClusters && ragClusters.length > 0;
 
-    if (!hasJournalData && !hasChatData && !hasTaskData && !hasGoalData) {
+    if (!hasJournalData && !hasChatData && !hasTaskData && !hasGoalData && !hasRagData) {
       return NextResponse.json({
         summary: "Not enough user data (entries, chats, tasks, or goals) to generate insights. Start journaling or managing tasks!",
         insights: [],
@@ -52,14 +52,18 @@ export async function POST(request: NextRequest) {
       `[${g.completed ? 'ACHIEVED' : 'ACTIVE'}] Category: ${g.category} — "${g.text}"`
     ).join('\n');
 
+    const ragLines = (ragClusters || []).map((c: any) =>
+      `${c.icon} ${c.theme} (Relevance: ${c.relevance}%, Entries: ${c.matchingEntriesCount}) — ${c.description}`
+    ).join('\n');
+
     const moodSummary = Object.entries(moodBreakdown || {})
       .sort((a: any, b: any) => b[1] - a[1])
       .map(([mood, count]) => `${mood}: ${count}`)
       .join(', ');
 
-    const prompt = `You are a compassionate mental health and productivity AI analyst. Analyze this user's complete activity log from the last ${period || 30} days—including reflective journal entries, AI Coach conversations, todo tasks, and long-term goals—to provide holistic, personalized insights. 
+    const prompt = `You are a compassionate mental health and productivity AI analyst equipped with a RAG (Retrieval-Augmented Generation) Semantic Memory System. Analyze this user's complete activity log from the last ${period || 30} days—including reflective journal entries, AI Coach conversations, todo tasks, long-term goals, and RAG vector theme clusters—to provide holistic, personalized insights. 
 
-Synthesize patterns across their emotional well-being (journals/chats), daily productivity (tasks/todos), and long-term aspirations (goals).
+Synthesize patterns across their emotional well-being (journals/chats), daily productivity (tasks/todos), long-term aspirations (goals), and RAG vector memory themes.
 
 WELLBEING DATA:
 - Total journal entries: ${totalEntries || 0}
@@ -67,6 +71,9 @@ WELLBEING DATA:
 - Average sentiment: ${avgSentiment !== null && avgSentiment !== undefined ? Math.round(avgSentiment * 100) + '%' : 'N/A'}
 - Sentiment trend: ${sentimentTrend || 'unknown'}
 - Mood breakdown: ${moodSummary || 'none'}
+
+RAG VECTOR SEMANTIC MEMORY THEMES (Retrieved from long-term memory embeddings):
+${ragLines || 'No RAG clusters computed yet.'}
 
 DAILY TASKS & TODO DATA:
 - Total tasks in period: ${taskStats?.totalTasks || 0}
