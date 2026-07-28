@@ -103,9 +103,11 @@ async function getAIResponse(
       }
       : undefined;
 
-    // Fetch user's tasks and goals for AI Coach awareness
+    // Fetch user's tasks, goals, and latest journal entry for AI Coach awareness
     let userTasks: any[] = [];
     let userGoals: any[] = [];
+    let latestJournalEntry: { title: string; content: string; createdAt: Date; moodLabels: string[] } | null = null;
+
     if (chat?.userId) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -130,6 +132,16 @@ async function getAIResponse(
         completed: g.completed,
         category: g.category || 'General',
       }));
+
+      // Fetch user's most recent journal entry
+      const latest = await prisma.entry.findFirst({
+        where: { userId: chat.userId },
+        orderBy: { createdAt: 'desc' },
+        select: { title: true, content: true, createdAt: true, moodLabels: true },
+      });
+      if (latest) {
+        latestJournalEntry = latest;
+      }
     }
 
     // ── RAG: Retrieve relevant past journal entries ──────────────────
@@ -198,6 +210,11 @@ async function getAIResponse(
 
     if (contextEntry) {
       systemPrompt += `\n\nThe user started this conversation from a journal entry titled "${contextEntry.title}". Entry content: "${contextEntry.content.slice(0, 500)}". Moods tagged: ${contextEntry.moodLabels.join(', ') || 'none'}.`;
+    } else if (latestJournalEntry) {
+      const dateStr = new Date(latestJournalEntry.createdAt).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+      });
+      systemPrompt += `\n\nUSER'S LATEST JOURNAL ENTRY (Written ${dateStr}): Title: "${latestJournalEntry.title}" | Content: "${latestJournalEntry.content.slice(0, 500)}" | Moods: ${latestJournalEntry.moodLabels.join(', ') || 'none'}. (You are aware of this latest journal entry if the user asks or mentions their recent feelings).`;
     }
 
     if (userTasks.length > 0) {
