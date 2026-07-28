@@ -3,45 +3,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, AuthError } from '@/lib/auth/api';
-
-// In-memory OTP cache with 10-minute expiry: Map<userId, { code: string; expiresAt: number }
-const otpStore = new Map<string, { code: string; expiresAt: number }>();
-
-export { otpStore };
+import { otpStore } from '@/lib/auth/otp-store';
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
 
-    // Check existing OTP to avoid spamming
+    // Check for active unexpired OTP code or generate a new one
+    let code: string;
     const existing = otpStore.get(user.id);
+
     if (existing && existing.expiresAt > Date.now()) {
-      // Return existing unexpired OTP
-      return NextResponse.json({
-        message: 'OTP code sent to email',
-        expiresInSeconds: Math.round((existing.expiresAt - Date.now()) / 1000),
-      });
+      // Reuse existing active code so email code remains valid
+      code = existing.code;
+    } else {
+      // Generate fresh 6-digit code with 10-minute expiry
+      code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+      otpStore.set(user.id, { code, expiresAt });
     }
-
-    // Generate crypto-secure 6-digit random code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    otpStore.set(user.id, { code, expiresAt });
 
     const recipientEmail = user.email!;
     const resendKey = process.env.RESEND_API_KEY;
 
     if (resendKey) {
       try {
-        await fetch('https://api.resend.com/emails', {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+        const resendRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${resendKey}`,
           },
           body: JSON.stringify({
-            from: 'MindFul-Space <security@mindful-space.app>',
+            from: `MindFul-Space <${fromEmail}>`,
             to: recipientEmail,
             subject: '🔐 Your 6-Digit Security Verification Code',
             html: `<div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #0F0714; color: #ffffff; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
@@ -54,6 +49,13 @@ export async function POST(request: NextRequest) {
             </div>`,
           }),
         });
+
+        if (!resendRes.ok) {
+          const errText = await resendRes.text();
+          console.error('Resend API error sending OTP:', resendRes.status, errText);
+        } else {
+          console.log(`[OTP Sent] ✉️ Successfully sent 6-digit OTP (${code}) to ${recipientEmail}`);
+        }
       } catch (emailErr) {
         console.error('Failed to dispatch OTP email:', emailErr);
       }
