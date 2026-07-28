@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, AuthError } from '@/lib/auth/api';
-import { otpStore } from '../send/route';
+import { otpStore } from '@/lib/auth/otp-store';
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
 
     const cleanCode = code.trim();
     const stored = otpStore.get(user.id);
+
+    console.log(`[OTP Verification Attempt] User: ${user.id}, Entered: "${cleanCode}", Stored: "${stored?.code}", ExpiresIn: ${stored ? Math.round((stored.expiresAt - Date.now()) / 1000) + 's' : 'NONE'}`);
 
     if (!stored || stored.expiresAt < Date.now()) {
       return NextResponse.json({ error: 'Verification code has expired. Please request a new code.' }, { status: 400 });
