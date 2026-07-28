@@ -1,8 +1,7 @@
-// GET /api/entries/analysis — Aggregate stats from user's entries (local computation, no AI)
-
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, AuthError } from '@/lib/auth/api';
+import { getSemanticClusters } from '@/lib/rag';
 
 const PREDEFINED_MOODS = ["Happy", "Neutral", "Sad", "Anxious", "Energetic", "Calm", "Grateful", "Angry"];
 
@@ -220,6 +219,9 @@ export async function GET(request: NextRequest) {
       })),
     };
 
+    // Calculate RAG Semantic Clusters from vector embeddings
+    const ragClusters = await getSemanticClusters(user.id);
+
     return NextResponse.json({
       totalEntries: entries.length,
       moodBreakdown,
@@ -231,6 +233,7 @@ export async function GET(request: NextRequest) {
       chatSummaries,
       taskStats,
       goalStats,
+      ragClusters,
       period: days,
     });
   } catch (error) {
