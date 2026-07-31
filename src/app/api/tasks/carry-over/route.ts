@@ -1,4 +1,4 @@
-// POST /api/tasks/carry-over — Push incomplete tasks from one date to another
+// POST /api/tasks/carry-over — Push incomplete tasks from one date to another (moves tasks to target date)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -30,36 +30,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'No incomplete tasks to carry over', carried: 0 });
     }
 
-    // Check which tasks already exist on the target date (avoid duplicates)
-    const existingTasks = await prisma.task.findMany({
+    // Update incomplete tasks: move their date to `to` and record `pushedFrom: from`
+    const updated = await prisma.task.updateMany({
       where: {
         userId: user.id,
+        date: from,
+        completed: false,
+      },
+      data: {
         date: to,
         pushedFrom: from,
       },
     });
-    const existingTexts = new Set(existingTasks.map((t) => t.text));
-
-    // Create new tasks on the target date for ones not already carried
-    const tasksToCreate = incompleteTasks
-      .filter((t) => !existingTexts.has(t.text))
-      .map((t) => ({
-        userId: user.id,
-        text: t.text,
-        date: to,
-        priority: t.priority,
-        pushedFrom: from,
-        completed: false,
-      }));
-
-    if (tasksToCreate.length > 0) {
-      await prisma.task.createMany({ data: tasksToCreate });
-    }
 
     return NextResponse.json({
-      message: `Carried over ${tasksToCreate.length} task(s)`,
-      carried: tasksToCreate.length,
-      skipped: incompleteTasks.length - tasksToCreate.length,
+      message: `Carried over ${updated.count} task(s)`,
+      carried: updated.count,
     });
   } catch (error) {
     if (error instanceof AuthError) {
