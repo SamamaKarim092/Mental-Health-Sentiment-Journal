@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth/context";
 import StatsCards from "@/app/components/dashboard/Widgets/StatsCards";
 import MoodChart from "@/app/components/dashboard/Widgets/MoodChart";
 import RecentEntries from "@/app/components/dashboard/Widgets/RecentEntries";
-import WellnessGoals from "@/app/components/dashboard/Widgets/WellnessGoals";
 import QuoteCard from "@/app/components/dashboard/Widgets/QuoteCard";
 
 import MoodCalendar from "@/app/components/dashboard/Widgets/MoodCalendar";
@@ -68,7 +67,6 @@ export default function DashboardPage() {
         <div className="lg:col-span-1 flex flex-col gap-6">
           <QuoteCard />
           <RecentEntries />
-          <WellnessGoals />
         </div>
       </div>
     </div>
