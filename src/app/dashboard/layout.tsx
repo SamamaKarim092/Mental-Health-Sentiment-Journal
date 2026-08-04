@@ -5,6 +5,7 @@ import Sidebar from "@/app/components/dashboard/Sidebar";
 import Header from "@/app/components/dashboard/Header";
 import { MoodProvider } from "@/app/context/MoodContext";
 import AmbientBackground from "@/app/components/ui/AmbientBackground";
+import OtpModal from "@/app/components/auth/OtpModal";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +16,7 @@ export default function DashboardLayout({
 
   return (
     <MoodProvider>
+      <OtpModal />
       <div className="flex min-h-screen relative">
         <AmbientBackground />
         <Sidebar
