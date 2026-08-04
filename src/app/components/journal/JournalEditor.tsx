@@ -17,12 +17,18 @@ import {
   Flame,
   MessageCircle,
   X,
+  Paperclip,
+  Link,
+  Trash2,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 import { detectMoodFromText } from "@/lib/mood-detection";
 import {
   createEntry as apiCreateEntry,
   suggestMood as apiSuggestMood,
 } from "@/lib/api/mutations";
+import { uploadJournalImage } from "@/lib/supabase/storage";
 
 const moods = [
   {
@@ -127,6 +133,13 @@ export default function JournalEditor() {
   >([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(REFLECTION_PROMPTS[0]);
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<Array<{ name: string; url: string; type?: string; size?: number }>>([])
+  const [attachmentName, setAttachmentName] = useState("");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [showAttachmentForm, setShowAttachmentForm] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Coach Bubble state
   const [showCoachBubble, setShowCoachBubble] = useState(false);
@@ -355,6 +368,12 @@ export default function JournalEditor() {
         customMoodLabel: customMoodLabel || null,
         moodLabels: moodLabels,
         tags: tagsArray,
+        attachments: attachments.map((att) => ({
+          fileName: att.name || 'image.png',
+          fileUrl: att.url,
+          fileType: att.type || (att.url.startsWith('data:image') ? 'image/png' : 'url'),
+          fileSize: att.size || 0,
+        })),
       });
 
       // Reset form on success
@@ -793,6 +812,159 @@ export default function JournalEditor() {
               className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:bg-black/40 transition-all"
             />
           </div>
+        </div>
+
+        {/* Attachments / Links */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label
+              className={`text-sm font-medium transition-colors duration-500 ${currentMood.accent}`}
+            >
+              Attachments
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowAttachmentForm(!showAttachmentForm)}
+              className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              <Paperclip className="w-3 h-3" />
+              {showAttachmentForm ? "Cancel" : "Add link"}
+            </button>
+          </div>
+
+          {/* Add Attachment Form */}
+          {showAttachmentForm && (
+            <div className="space-y-3 p-3 bg-black/20 border border-white/10 rounded-xl">
+              {/* Image Upload Button */}
+              <div className="flex items-center gap-3 pb-2 border-b border-white/10">
+                <label className="flex items-center gap-2 px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 rounded-lg text-xs font-semibold cursor-pointer transition-all">
+                  {uploadingImage ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ImageIcon className="w-3.5 h-3.5" />
+                  )}
+                  <span>{uploadingImage ? "Uploading..." : "Upload Image"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploadingImage}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingImage(true);
+                      try {
+                        const result = await uploadJournalImage(file);
+                        setAttachments([
+                          ...attachments,
+                          {
+                            name: result.fileName,
+                            url: result.url,
+                            type: result.fileType,
+                            size: result.fileSize,
+                          },
+                        ]);
+                        setShowAttachmentForm(false);
+                      } catch (err) {
+                        console.error("Failed to upload image:", err);
+                      } finally {
+                        setUploadingImage(false);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-[11px] text-gray-500">Supports PNG, JPG, WEBP</span>
+              </div>
+
+              {/* URL Link Input */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={attachmentName}
+                  onChange={(e) => setAttachmentName(e.target.value)}
+                  placeholder="Label (e.g. Article, Web Link)"
+                  className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all"
+                />
+                <input
+                  type="url"
+                  value={attachmentUrl}
+                  onChange={(e) => setAttachmentUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="flex-[2] bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (attachmentUrl.trim()) {
+                      setAttachments([
+                        ...attachments,
+                        {
+                          name: attachmentName.trim() || "Link",
+                          url: attachmentUrl.trim(),
+                          type: "url",
+                          size: 0,
+                        },
+                      ]);
+                      setAttachmentName("");
+                      setAttachmentUrl("");
+                      setShowAttachmentForm(false);
+                    }
+                  }}
+                  disabled={!attachmentUrl.trim()}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-all shrink-0"
+                >
+                  Add Link
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Attachments List */}
+          {attachments.length > 0 && (
+            <div className="space-y-2">
+              {attachments.map((att, index) => {
+                const isImage = att.type?.startsWith('image') || att.url.startsWith('data:image') || /\.(png|jpg|jpeg|webp|gif)$/i.test(att.url);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-2.5 bg-black/10 border border-white/5 rounded-xl group"
+                  >
+                    {isImage ? (
+                      <img
+                        src={att.url}
+                        alt={att.name}
+                        className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0"
+                      />
+                    ) : (
+                      <Link className="w-4 h-4 text-purple-400 shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-300 truncate">
+                        {att.name}
+                      </p>
+                      <a
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-purple-400 hover:text-purple-300 truncate block"
+                      >
+                        {att.url.length > 40 ? `${att.url.slice(0, 40)}...` : att.url}
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachments(attachments.filter((_, i) => i !== index))
+                      }
+                      className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Success Message */}
