@@ -23,6 +23,10 @@ import {
   BookOpen,
   Sparkles,
   MessageCircle,
+  CheckSquare,
+  Target,
+  Layers,
+  Brain,
 } from "lucide-react";
 import { useAnalysis } from "@/hooks/use-api";
 import { apiFetch } from "@/lib/api/fetcher";
@@ -87,7 +91,12 @@ export default function AnalysisPage() {
 
   // Fetch AI insights when analysis data is ready
   useEffect(() => {
-    if (!analysis || analysis.totalEntries === 0) {
+    const hasData =
+      (analysis?.totalEntries || 0) > 0 ||
+      (analysis?.taskStats?.totalTasks || 0) > 0 ||
+      (analysis?.goalStats?.totalGoals || 0) > 0;
+
+    if (!analysis || !hasData) {
       setAiData(null);
       return;
     }
@@ -105,6 +114,9 @@ export default function AnalysisPage() {
             sentimentTrend: analysis.sentimentTrend,
             writingStreak: analysis.writingStreak,
             totalEntries: analysis.totalEntries,
+            taskStats: analysis.taskStats,
+            goalStats: analysis.goalStats,
+            ragClusters: analysis.ragClusters,
             period: analysis.period,
           }),
         });
@@ -141,16 +153,22 @@ export default function AnalysisPage() {
     analysis?.sentimentTrend === "up" ? "text-green-400" :
     analysis?.sentimentTrend === "down" ? "text-red-400" : "text-gray-400";
 
+  const hasAnyUserActivity =
+    analysis &&
+    (analysis.totalEntries > 0 ||
+      (analysis.taskStats?.totalTasks || 0) > 0 ||
+      (analysis.goalStats?.totalGoals || 0) > 0);
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-1">
       {/* Top Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
-            AI Insights & Analysis
+            AI Insights & Holistic Analysis
           </h2>
           <p className="text-gray-400 text-[15px]">
-            Deep cognitive analysis derived from your wellness journal entries.
+            Deep cognitive analysis across your journal entries, AI conversations, daily tasks, and long-term goals.
           </p>
         </div>
         <div>
@@ -170,7 +188,7 @@ export default function AnalysisPage() {
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <Loader2 className="w-10 h-10 text-purple-400 animate-spin" />
-          <p className="text-gray-400 text-sm animate-pulse">Analyzing your mental wellness journey...</p>
+          <p className="text-gray-400 text-sm animate-pulse">Analyzing your mental wellness journey and productivity...</p>
         </div>
       )}
 
@@ -183,26 +201,34 @@ export default function AnalysisPage() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && analysis?.totalEntries === 0 && (
+      {!isLoading && !error && !hasAnyUserActivity && (
         <div className="text-center py-20 bg-white/[0.02] border border-white/10 rounded-3xl backdrop-blur-md">
           <BookOpen className="w-14 h-14 text-gray-600 mx-auto mb-5" />
-          <h3 className="text-xl font-bold text-white mb-2">No entries yet</h3>
+          <h3 className="text-xl font-bold text-white mb-2">No activity recorded yet</h3>
           <p className="text-gray-400 max-w-md mx-auto text-sm leading-relaxed mb-6">
-            Start writing journal entries to unlock AI-powered summaries, emotional trends, and personalized wellness suggestions!
+            Start writing journal entries or adding daily tasks to unlock full AI-powered insights, emotional trends, and productivity analysis!
           </p>
-          <button
-            onClick={() => router.push("/dashboard/journal")}
-            className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white rounded-xl text-sm font-semibold transition-all shadow-lg"
-          >
-            Write First Entry
-          </button>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => router.push("/dashboard/journal")}
+              className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white rounded-xl text-sm font-semibold transition-all shadow-lg cursor-pointer"
+            >
+              Write First Entry
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/tasks")}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            >
+              Add Tasks
+            </button>
+          </div>
         </div>
       )}
 
-      {!isLoading && !error && analysis && analysis.totalEntries > 0 && (
+      {!isLoading && !error && hasAnyUserActivity && (
         <>
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
             {[
               {
                 label: "Journal Entries",
@@ -213,7 +239,7 @@ export default function AnalysisPage() {
               },
               {
                 label: "Writing Streak",
-                value: `${analysis.writingStreak} days`,
+                value: `${analysis.writingStreak} d`,
                 desc: "Consecutive active days",
                 icon: Award,
                 color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/10",
@@ -232,26 +258,40 @@ export default function AnalysisPage() {
                 icon: sentimentIcon,
                 color: `${sentimentColor} bg-white/5 border-white/5`,
               },
+              {
+                label: "Task Completion",
+                value: `${analysis.taskStats?.completionRate || 0}%`,
+                desc: `${analysis.taskStats?.completedTasks || 0}/${analysis.taskStats?.totalTasks || 0} completed`,
+                icon: CheckSquare,
+                color: "text-blue-400 bg-blue-500/10 border-blue-500/10",
+              },
+              {
+                label: "Long-term Goals",
+                value: `${analysis.goalStats?.totalGoals || 0}`,
+                desc: `${analysis.goalStats?.completedGoals || 0} achieved`,
+                icon: Target,
+                color: "text-pink-400 bg-pink-500/10 border-pink-500/10",
+              },
             ].map((stat, idx) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={idx}
-                  className="bg-white/[0.03] border border-white/10 hover:border-white/15 rounded-2xl p-5 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+                  className="bg-white/[0.03] border border-white/10 hover:border-white/15 rounded-2xl p-4 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                       {stat.label}
                     </span>
-                    <div className={`p-2 rounded-lg border ${stat.color}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`p-1.5 rounded-lg border ${stat.color}`}>
+                      <Icon className="w-3.5 h-3.5" />
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-2xl font-extrabold text-white tracking-tight mb-1">
+                    <h4 className="text-xl font-extrabold text-white tracking-tight mb-0.5">
                       {stat.value}
                     </h4>
-                    <p className="text-xs text-gray-500 font-medium">{stat.desc}</p>
+                    <p className="text-[11px] text-gray-500 font-medium truncate">{stat.desc}</p>
                   </div>
                 </div>
               );
@@ -359,6 +399,62 @@ export default function AnalysisPage() {
                   <div className="h-3.5 bg-white/10 rounded w-[80%] animate-pulse" />
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* RAG Semantic Memory Clusters */}
+          {analysis.ragClusters && analysis.ragClusters.length > 0 && (
+            <div className="bg-[#13091B]/60 border border-purple-500/20 rounded-3xl p-6 sm:p-7 shadow-lg backdrop-blur-md">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/15 rounded-xl border border-emerald-500/20">
+                    <Brain className="w-5.5 h-5.5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      RAG Semantic Memory Themes
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">
+                        🧠 Vector RAG
+                      </span>
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Behavioral and psychological themes extracted from your long-term vector embeddings
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {analysis.ragClusters.map((cluster: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-white/[0.02] border border-white/10 hover:border-purple-500/30 rounded-2xl p-4 transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xl">{cluster.icon}</span>
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                          {cluster.relevance}% Match
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold text-white mb-1">{cluster.theme}</h4>
+                      <p className="text-xs text-gray-400 mb-3 line-clamp-2">{cluster.description}</p>
+                    </div>
+
+                    <div>
+                      <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden mb-2">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-emerald-400 rounded-full transition-all duration-500"
+                          style={{ width: `${cluster.relevance}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-gray-500 font-medium">
+                        {cluster.matchingEntriesCount} matching {cluster.matchingEntriesCount === 1 ? 'entry' : 'entries'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
