@@ -340,6 +340,41 @@ export default function EntriesList({
                   {entry.content}
                 </p>
 
+                {/* Attached Images / Files */}
+                {entry.attachments && entry.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mb-4 pt-2 border-t border-white/5">
+                    {entry.attachments.map((att: any, attIdx: number) => {
+                      const isImg = att.fileType?.startsWith('image') || att.fileUrl?.startsWith('data:image') || /\.(png|jpg|jpeg|webp|gif)$/i.test(att.fileUrl);
+                      return isImg ? (
+                        <a
+                          key={att.id || attIdx}
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block rounded-xl overflow-hidden border border-white/10 hover:border-purple-500/50 transition-all group/img"
+                        >
+                          <img
+                            src={att.fileUrl}
+                            alt={att.fileName || 'Attachment'}
+                            className="max-h-48 max-w-xs object-cover group-hover/img:scale-105 transition-transform duration-300"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          key={att.id || attIdx}
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs text-purple-300 transition-all"
+                        >
+                          <span>📎</span>
+                          <span className="truncate max-w-[200px]">{att.fileName || att.fileUrl}</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Mood label chips */}
                   {entry.moodLabels &&
