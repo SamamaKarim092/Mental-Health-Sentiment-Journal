@@ -29,6 +29,7 @@ import {
   Flame,
   BarChart3,
   PieChart as PieChartIcon,
+  CheckSquare,
 } from "lucide-react";
 import { useMoodTrends } from "@/hooks/use-api";
 import { format } from "date-fns";
@@ -420,6 +421,65 @@ export default function TrendsPage() {
                       radius={[0, 0, 0, 0]}
                     />
                   ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Task Completion Trend Chart */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <CheckSquare className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Daily Task Completion & Productivity</h3>
+                  <p className="text-xs text-gray-400">Track tasks completed each day alongside your journaling activity</p>
+                </div>
+              </div>
+            </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.1)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#9CA3AF"
+                    axisLine={false}
+                    tickLine={false}
+                    fontSize={12}
+                  />
+                  <YAxis
+                    stroke="#9CA3AF"
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1F1229",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                    }}
+                    itemStyle={{ color: "#fff" }}
+                  />
+                  <Bar
+                    dataKey="completedTasks"
+                    name="Completed Tasks"
+                    fill="#60A5FA"
+                    radius={[6, 6, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="totalTasks"
+                    name="Total Tasks"
+                    fill="rgba(255,255,255,0.1)"
+                    radius={[6, 6, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
