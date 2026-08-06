@@ -14,6 +14,7 @@ export async function createEntry(data: {
   customMoodLabel?: string | null;
   moodLabels?: string[];
   tags?: string[];
+  attachments?: Array<{ fileName: string; fileUrl: string; fileType: string; fileSize: number }>;
 }) {
   const entry = await apiFetch('/api/entries', {
     method: 'POST',
