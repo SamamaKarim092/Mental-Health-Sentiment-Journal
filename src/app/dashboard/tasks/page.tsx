@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTasks, useGoals } from "@/hooks/use-api";
 import { apiFetch } from "@/lib/api/fetcher";
+import { useSWRConfig } from "swr";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ── Helpers ──────────────────────────────────────────────
@@ -113,6 +114,11 @@ export default function TasksPage() {
   const totalGoals = goals?.length || 0;
   const goalProgress = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
 
+  const { mutate: globalMutate } = useSWRConfig();
+  const refreshAnalysisAndTrends = () => {
+    globalMutate((key) => typeof key === 'string' && key.startsWith('/api/entries'));
+  };
+
   // ── Handlers ──────────────────────────────────────────
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +131,7 @@ export default function TasksPage() {
       setNewTaskText("");
       setNewTaskPriority("MEDIUM");
       mutateTasks();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to add task:", err);
     }
@@ -137,6 +144,7 @@ export default function TasksPage() {
         body: JSON.stringify({ completed: !completed }),
       });
       mutateTasks();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to toggle task:", err);
     }
@@ -146,6 +154,7 @@ export default function TasksPage() {
     try {
       await apiFetch(`/api/tasks/${id}`, { method: "DELETE" });
       mutateTasks();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to delete task:", err);
     }
@@ -159,6 +168,8 @@ export default function TasksPage() {
         body: JSON.stringify({ fromDate: yesterdayKey, toDate: dateKey }),
       });
       mutateTasks();
+      globalMutate(`/api/tasks?date=${yesterdayKey}`);
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to carry over tasks:", err);
     } finally {
@@ -177,6 +188,7 @@ export default function TasksPage() {
       setNewGoalText("");
       setNewGoalCategory("");
       mutateGoals();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to add goal:", err);
     }
@@ -189,6 +201,7 @@ export default function TasksPage() {
         body: JSON.stringify({ completed: !completed }),
       });
       mutateGoals();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to toggle goal:", err);
     }
@@ -198,6 +211,7 @@ export default function TasksPage() {
     try {
       await apiFetch(`/api/goals/${id}`, { method: "DELETE" });
       mutateGoals();
+      refreshAnalysisAndTrends();
     } catch (err) {
       console.error("Failed to delete goal:", err);
     }
