@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Download, LogOut, Shield, Info, Lock, Sun, Moon } from "lucide-react";
+import { User, Download, LogOut, Shield, Info, Lock, Sun, Moon, Bell, Clock } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { apiFetch } from "@/lib/api/fetcher";
 import { createClient } from "@/lib/supabase/client";
@@ -20,14 +20,45 @@ export default function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  // Load display name from Supabase user metadata
+  // Reminder settings state
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderTime, setReminderTime] = useState("20:00");
+  const [reminderSaving, setReminderSaving] = useState(false);
+  const [reminderSaved, setReminderSaved] = useState(false);
+
+  // Load display name & reminder settings
   useEffect(() => {
     if (user) {
       setDisplayName(
         user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "",
       );
+      apiFetch("/api/user/reminders")
+        .then((res) => {
+          if (res) {
+            setReminderEnabled(res.reminderEnabled ?? true);
+            setReminderTime(res.reminderTime || "20:00");
+          }
+        })
+        .catch((err) => console.error("Failed to load reminders:", err));
     }
   }, [user]);
+
+  const handleUpdateReminders = async (enabled: boolean, time: string) => {
+    setReminderSaving(true);
+    setReminderSaved(false);
+    try {
+      await apiFetch("/api/user/reminders", {
+        method: "POST",
+        body: JSON.stringify({ reminderEnabled: enabled, reminderTime: time }),
+      });
+      setReminderSaved(true);
+      setTimeout(() => setReminderSaved(false), 2500);
+    } catch (err) {
+      console.error("Failed to update reminders:", err);
+    } finally {
+      setReminderSaving(false);
+    }
+  };
 
   const handleUpdateProfile = async () => {
     setSaving(true);
@@ -214,6 +245,60 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Daily Reminders Section */}
+        <section className="bg-white/40 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 shadow-xs">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            Daily Journaling Reminders
+          </h3>
+          <div className="space-y-4 max-w-md">
+            <div className="flex items-center justify-between p-4 bg-slate-500/5 dark:bg-black/20 rounded-xl border border-slate-200/50 dark:border-white/5">
+              <div>
+                <p className="text-slate-800 dark:text-white font-medium">Daily Email Reminder</p>
+                <p className="text-sm text-slate-500 dark:text-gray-400">
+                  Receive a daily email prompt to write your journal
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={reminderEnabled}
+                  onChange={(e) => {
+                    const enabled = e.target.checked;
+                    setReminderEnabled(enabled);
+                    handleUpdateReminders(enabled, reminderTime);
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+
+            {reminderEnabled && (
+              <div className="flex items-center justify-between p-4 bg-slate-500/5 dark:bg-black/20 rounded-xl border border-slate-200/50 dark:border-white/5">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm font-medium text-slate-800 dark:text-white">Reminder Time</span>
+                </div>
+                <input
+                  type="time"
+                  value={reminderTime}
+                  onChange={(e) => {
+                    const time = e.target.value;
+                    setReminderTime(time);
+                    handleUpdateReminders(reminderEnabled, time);
+                  }}
+                  className="bg-slate-500/10 dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-sm text-slate-800 dark:text-white focus:outline-none focus:border-purple-500 cursor-pointer"
+                />
+              </div>
+            )}
+
+            {reminderSaved && (
+              <p className="text-xs font-semibold text-emerald-500">✓ Reminder preferences saved!</p>
+            )}
           </div>
         </section>
 
